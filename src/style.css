@@ -36,9 +36,9 @@
   --color-accent-red: #e53e3e; /* 红色 - 录制指示 */
 
   /* 摄影主题间距和尺寸 */
-  --spacing-container: 24px; /* 容器边距 */
-  --spacing-section: 20px; /* 区块间距 */
-  --spacing-field: 12px; /* 字段间距 */
+  --spacing-container: 12px; /* 容器边距 */
+  --spacing-section: 12px; /* 区块间距 */
+  --spacing-field: 8px; /* 字段间距 */
   --radius-card: 8px; /* 卡片圆角 */
   --radius-element: 4px; /* 元素圆角 */
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4); /* 卡片阴影 */
@@ -77,7 +77,7 @@
 @layer components {
   /* 页面标题样式 */
   .page-title {
-    @apply text-2xl md:text-3xl font-bold tracking-wide mb-4 font-display;
+    @apply text-2xl md:text-3xl font-bold tracking-wide mb-2 font-display;
     background: linear-gradient(
       120deg,
       #c93639 47%,
@@ -140,12 +140,12 @@
 
   /* tag 容器样式 */
   .tag-container {
-    @apply flex flex-wrap gap-2 items-start -mt-1;
+    @apply flex flex-wrap gap-1.5 items-start -mt-0.5;
   }
 
   /* 字段容器响应式样式 - 窄视口优化 */
   .field-container {
-    @apply py-1.5 border-b border-gray-200/30;
+    @apply py-1 border-b border-gray-200/30;
   }
 
   .field-container:last-child {
@@ -155,7 +155,7 @@
   /* 移动端：垂直布局，标题和值各占一行，更紧凑 */
   @media (max-width: 767px) {
     .field-container {
-      @apply flex flex-col gap-0.5 py-1;
+      @apply flex flex-col gap-0.5 py-0.5;
     }
 
     .field-label {
@@ -201,7 +201,7 @@
 
   /* 女性角色卡片高度限制和滚动效果 */
   .woman-card-content {
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
     overflow-x: hidden; /* 严禁水平滚动条 */
     scrollbar-width: thin; /* Firefox 细滚动条 */
@@ -212,7 +212,7 @@
   /* 滚动渐变遮罩容器 */
   .woman-card-scroll-container {
     position: relative;
-    max-height: 400px;
+    max-height: 300px;
   }
 
   /* 底部渐变遮罩 - 提示有更多内容 */
@@ -262,41 +262,41 @@
   @media (max-width: 767px) {
     /* 减少卡片内边距 */
     .character-content {
-      @apply gap-3 p-5;
+      @apply gap-2 p-3;
     }
 
-    /* 减少子部分间距 */
+     /* 减少子部分间距 */
     .subsection-card {
-      @apply p-3;
+      @apply p-2;
     }
 
-    /* 优化折叠卡片标题 */
+     /* 优化折叠卡片标题 */
     .collapsible-title {
-      @apply text-sm py-2;
+      @apply text-sm py-1.5;
     }
 
-    /* 减少女性角色卡片的滚动容器边距 */
+     /* 减少女性角色卡片的滚动容器边距 */
     .woman-card-scroll-container {
-      max-height: 350px; /* 移动端稍微减少高度 */
+      max-height: 280px; /* 移动端稍微减少高度 */
     }
 
     .woman-card-content {
-      max-height: 350px;
+      max-height: 280px;
     }
   }
 
   /* CSS Columns Masonry 布局 - 高性能瀑布流布局 (最大2列) */
   .masonry-grid {
-    @apply mt-4;
+    @apply mt-3;
     display: block;
-    column-gap: 1rem; /* 16px gap */
+    column-gap: 0.75rem; /* 12px gap */
     column-count: 1; /* 默认1列 */
   }
 
   /* Masonry 项目样式 */
   .masonry-item {
     break-inside: avoid;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     width: 100%;
     display: block;
   }
