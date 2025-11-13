@@ -216,25 +216,13 @@ async function loadStatusData() {
         console.log(
           `✅ Built ${outputFile} for ${mode} (${minifyStatus}) with Tailwind CSS v4`,
         );
+        const sizeInfo = `${unminifiedSize} → ${finalSize} bytes (${(finalSize / 1024).toFixed(1)} KB)`;
+        const minifyInfo = shouldMinify ? ` | Minify: ${minifyEfficiency}%` : "";
         console.log(
-          `📦 File size breakdown:`,
+          `📦 Size: ${sizeInfo}${minifyInfo}`,
         );
         console.log(
-          `   • Original (unminified): ${unminifiedSize} bytes (${(unminifiedSize / 1024).toFixed(1)} KB)`,
-        );
-        console.log(
-          `   • Final size: ${finalSize} bytes (${(finalSize / 1024).toFixed(1)} KB)`,
-        );
-        if (shouldMinify) {
-          console.log(
-            `   • Minify reduction: ${unminifiedSize - finalSize} bytes (${minifyEfficiency}% smaller)`,
-          );
-        }
-        console.log(
-          `📊 Overall reduction: ${originalHtmlSize - finalSize} bytes (${htmlCompressionRatio}% from template)`,
-        );
-        console.log(
-          `🎯 Final file: ${outputPath}`,
+          `🎯 ${outputPath}`,
         );
       } catch (error) {
         console.error("❌ Build failed:", error.message);
