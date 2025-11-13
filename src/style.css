@@ -135,7 +135,7 @@
 
   /* 统一的 tag 样式 - 基于器材物品的样式 */
   .tag-base {
-    @apply bg-[var(--color-dark-bg)] text-[var(--color-text-secondary)] px-3 py-1.5 border border-[var(--color-border-accent)] text-xs font-medium whitespace-nowrap rounded-full hover:bg-[var(--color-surface-primary)] transition-colors duration-200;
+    @apply bg-[var(--color-black)] text-[var(--color-text-secondary)] px-3 py-0.5 border border-[var(--color-border-accent)] text-xs font-medium whitespace-nowrap rounded-full hover:bg-[var(--color-surface-primary)] transition-colors duration-200;
   }
 
   /* tag 容器样式 */
@@ -265,17 +265,17 @@
       @apply gap-2 p-3;
     }
 
-     /* 减少子部分间距 */
+    /* 减少子部分间距 */
     .subsection-card {
       @apply p-2;
     }
 
-     /* 优化折叠卡片标题 */
+    /* 优化折叠卡片标题 */
     .collapsible-title {
       @apply text-sm py-1.5;
     }
 
-     /* 减少女性角色卡片的滚动容器边距 */
+    /* 减少女性角色卡片的滚动容器边距 */
     .woman-card-scroll-container {
       max-height: 320px; /* 移动端稍微减少高度 */
     }
