@@ -5,12 +5,11 @@
     "build": "node build.js",
     "build:prod": "node build.js --prod",
     "build:prod:debug": "node build.js --prod --no-minify",
-    "dev": "concurrently 'node build.js --watch' 'http-server'"
+    "dev": "node dev-server.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
     "autoprefixer": "^10.4.22",
-    "concurrently": "^9.2.1",
     "cssnano": "^7.1.2",
     "esbuild": "^0.19.0",
     "http-server": "^14.1.1"
