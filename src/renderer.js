@@ -330,11 +330,14 @@ function createCollapsibleCard(
   initiallyCollapsed = true,
   customStyles = {}
 ) {
-  // 创建卡片容器
+  // 创建卡片容器 - 使用 grid 让内容自动调整高度
   const cardDiv = document.createElement("div");
   cardDiv.className =
     customStyles.cardClass ||
-    "bg-[var(--color-surface-accent)] border border-[var(--color-border-accent)] rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)]";
+    "bg-[var(--color-surface-accent)] border border-[var(--color-border-accent)] rounded-[var(--radius-element)] shadow-[var(--shadow-element)]";
+  cardDiv.style.display = "grid";
+  cardDiv.style.gridTemplateRows = "auto 1fr";
+  cardDiv.style.overflow = "hidden";
 
   // 创建可点击的标题容器（包含padding，整个区域可点击）
   const titleContainer = document.createElement("div");
@@ -354,74 +357,72 @@ function createCollapsibleCard(
   titleContainer.appendChild(collapseIcon);
   cardDiv.appendChild(titleContainer);
 
-  // 创建内容容器
+  // 创建内容容器 - 使用 grid 自动内容高度
   const contentContainer = document.createElement("div");
   contentContainer.className = COLLAPSIBLE_CLASSES.CONTENT;
+  contentContainer.style.display = "grid";
+  contentContainer.style.gridTemplateRows = "1fr";
+  contentContainer.style.overflow = "hidden";
   contentContainer.appendChild(content);
   cardDiv.appendChild(contentContainer);
 
   // 折叠状态管理
   let isCollapsed = initiallyCollapsed;
+  let resizeObserver = null;
 
-  function updateContentHeight() {
-    if (!isCollapsed) {
-      contentContainer.style.maxHeight = contentContainer.scrollHeight + "px";
+  function updateVisibility() {
+    if (isCollapsed) {
+      contentContainer.style.gridTemplateRows = "0fr";
+      collapseIcon.style.transform = "rotate(45deg)";
+    } else {
+      contentContainer.style.gridTemplateRows = "1fr";
+      collapseIcon.style.transform = "rotate(0deg)";
+    }
+  }
 
-      // 检查是否有女性角色卡片滚动容器，更新其遮罩状态
-      const scrollContainer = contentContainer.querySelector(".woman-card-scroll-container");
-      const scrollContent = scrollContainer?.querySelector(".woman-card-content");
-      if (scrollContainer && scrollContent) {
-        updateScrollMask(scrollContainer, scrollContent);
-      }
+  // 使用 ResizeObserver 监听内容变化
+  function setupResizeObserver() {
+    if (!resizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        // 当内容大小变化时，grid 自动重新计算，无需手动干预
+      });
+      resizeObserver.observe(content);
     }
   }
 
   // 点击事件处理
   titleContainer.addEventListener("click", () => {
     isCollapsed = !isCollapsed;
+    updateVisibility();
 
-    if (isCollapsed) {
-      contentContainer.style.maxHeight = "0px";
-      collapseIcon.style.transform = "rotate(45deg)";
-    } else {
-      updateContentHeight();
-      collapseIcon.style.transform = "rotate(0deg)";
-      // 立即更新父级高度
-      updateParentCollapsibleHeight(contentContainer);
+    // 检查是否有女性角色卡片滚动容器，更新其遮罩状态
+    const scrollContainer = contentContainer.querySelector(".woman-card-scroll-container");
+    const scrollContent = scrollContainer?.querySelector(".woman-card-content");
+    if (scrollContainer && scrollContent) {
+      setTimeout(() => {
+        updateScrollMask(scrollContainer, scrollContent);
+      }, 50);
     }
-
-    // 延迟检查以处理嵌套元素动画（如果有的话）
-    setTimeout(() => {
-      if (!isCollapsed) {
-        updateParentCollapsibleHeight(contentContainer);
-        updateContentHeight();
-      }
-    }, 50);
   });
 
-  // 窗口大小变化时更新高度
+  // 窗口大小变化时 grid 自动调整
   const handleResize = () => {
-    setTimeout(() => {
-      updateContentHeight();
-      updateParentCollapsibleHeight(contentContainer);
-    }, 100);
+    // ResizeObserver 会自动处理，无需手动计算
   };
   window.addEventListener("resize", handleResize);
 
   // 清理函数
   cardDiv._cleanup = () => {
     window.removeEventListener("resize", handleResize);
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
   };
 
   // 初始化状态
+  setupResizeObserver();
   setTimeout(() => {
-    if (isCollapsed) {
-      contentContainer.style.maxHeight = "0px";
-      collapseIcon.style.transform = "rotate(45deg)";
-    } else {
-      updateContentHeight();
-      collapseIcon.style.transform = "rotate(0deg)";
-    }
+    updateVisibility();
   }, 0);
 
   return cardDiv;
