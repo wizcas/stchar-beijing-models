@@ -60,18 +60,92 @@
     color: var(--color-text-primary);
     line-height: 1.5;
     padding: var(--spacing-container);
-    /* 摄影主题背景纹理 */
+    
+    /* 老旧混凝土墙纹理效果 */
     background-image:
+      /* 粗糙磨砂纹理（Grainy noise） */
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 2px,
+        rgba(255, 255, 255, 0.03) 4px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.05) 2px,
+        rgba(0, 0, 0, 0.05) 4px
+      ),
+      
+      /* 污渍和风蚀效果 */
       radial-gradient(
-        circle at 25% 25%,
-        rgba(212, 175, 55, 0.02) 0%,
+        ellipse 400px 300px at 20% 50%,
+        rgba(150, 140, 120, 0.04),
         transparent 50%
       ),
       radial-gradient(
-        circle at 75% 75%,
-        rgba(0, 188, 212, 0.02) 0%,
+        ellipse 300px 350px at 80% 40%,
+        rgba(100, 90, 70, 0.03),
         transparent 50%
+      ),
+      
+      /* 浅色裂纹纹理 */
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 30px,
+        rgba(200, 200, 200, 0.015) 30px,
+        rgba(200, 200, 200, 0.015) 32px
+      ),
+      
+      /* 深色暗纹 */
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(0, 0, 0, 0.04) 40px,
+        rgba(0, 0, 0, 0.04) 42px
+      ),
+      
+      /* 随机污点（模拟水渍、污垢） */
+      radial-gradient(
+        circle at 15% 20%,
+        rgba(80, 70, 50, 0.08) 0%,
+        transparent 15%
+      ),
+      radial-gradient(
+        circle at 85% 80%,
+        rgba(100, 90, 70, 0.06) 0%,
+        transparent 12%
+      ),
+      radial-gradient(
+        circle at 40% 70%,
+        rgba(120, 110, 90, 0.05) 0%,
+        transparent 18%
+      ),
+      
+      /* 基础颜色 */
+      linear-gradient(
+        135deg,
+        rgba(51, 48, 36, 1),
+        rgba(51, 48, 36, 1)
       );
+    
+    background-size:
+      4px 4px,
+      4px 4px,
+      1000px 1000px,
+      1000px 1000px,
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      100% 100%;
+    
+    background-attachment: fixed;
   }
 }
 
@@ -136,7 +210,7 @@
 
   /* 统一的 tag 样式 - 基于器材物品的样式 */
   .tag-base {
-    @apply bg-surface-black text-text-secondary px-3 py-0.5 border border-border-accent text-xs font-medium whitespace-nowrap rounded-full hover:bg-surface-primary transition-colors duration-200;
+    @apply cursor-pointer bg-surface-black text-text-secondary px-3 py-0.5 border border-border-accent text-xs font-medium whitespace-nowrap rounded-full hover:bg-surface-primary transition-colors duration-200;
   }
 
   /* tag 容器样式 */
@@ -309,13 +383,13 @@
     }
   }
 
-   em {
-     @apply text-accent-cyan;
-   }
+  em {
+    @apply text-accent-cyan;
+  }
 
-   /* 可折叠卡片内容容器 - 使用 grid 1fr/0fr 进行平滑展开/收缩 */
-   .collapsible-content {
-     overflow: hidden;
-     transition: grid-template-rows 200ms ease-in-out;
-   }
+  /* 可折叠卡片内容容器 - 使用 grid 1fr/0fr 进行平滑展开/收缩 */
+  .collapsible-content {
+    overflow: hidden;
+    transition: grid-template-rows 200ms ease-in-out;
+  }
 }
