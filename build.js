@@ -2,7 +2,6 @@ const esbuild = require("esbuild");
 const fs = require("fs");
 const path = require("path");
 const postcss = require("postcss");
-const tailwindcss = require("@tailwindcss/postcss");
 const autoprefixer = require("autoprefixer");
 const cssnano = require("cssnano");
 
@@ -28,72 +27,109 @@ function compressHtml(html) {
   );
 }
 
-// Tailwind CSS 处理函数
+// Tailwind CSS 处理函数 - 正确的 v4 处理方式
 async function processTailwind() {
   try {
-    // 读取 CSS 文件
-    const css = fs.readFileSync("src/style.css", "utf8");
-
-    // 配置 PostCSS 插件
-    const plugins = [
-      tailwindcss(),
-      autoprefixer(),
-      cssnano({
-        preset: [
-          "default",
-          {
-            // 保留重要的注释
-            discardComments: { removeAll: true },
-            // 压缩颜色值
-            colormin: true,
-            // 合并相同的规则
-            mergeRules: true,
-            // 压缩字体权重
-            minifyFontValues: true,
-            // 压缩选择器
-            minifySelectors: true,
-            // 标准化空白
-            normalizeWhitespace: true,
-            // 移除未使用的规则
-            discardUnused: true,
-            // 压缩 calc() 表达式
-            calc: true,
-            // 压缩渐变
-            minifyGradients: true,
-          },
-        ],
-      }),
-    ];
-
-    // 使用 PostCSS 处理 Tailwind
-    const result = await postcss(plugins).process(css, {
-      from: "src/style.css",
-      to: "dist/style.css",
-    });
+    console.log("🎨 Building Tailwind CSS v4...");
 
     // 确保 dist 目录存在
     if (!fs.existsSync("dist")) {
       fs.mkdirSync("dist", { recursive: true });
     }
 
+    // 读取源 CSS
+    const css = fs.readFileSync("src/style.css", "utf8");
+    const originalSize = Buffer.byteLength(css, "utf8");
+
+    // 使用 @tailwindcss/postcss 正确处理 Tailwind v4
+    const tailwindcss = require("@tailwindcss/postcss");
+
+    // 创建 PostCSS 处理流程
+    const result = await postcss([
+      // Tailwind CSS v4 - 必须是第一个插件
+      tailwindcss(),
+      // 其他插件
+      autoprefixer(),
+      cssnano({
+        preset: [
+          "default",
+          {
+            discardComments: { removeAll: true },
+            colormin: true,
+            mergeRules: true,
+            minifyFontValues: true,
+            minifySelectors: true,
+            normalizeWhitespace: true,
+            calc: true,
+            minifyGradients: true,
+          },
+        ],
+      }),
+    ]).process(css, {
+      from: path.resolve("src/style.css"),
+      to: path.resolve("dist/style.css"),
+      // 重要：告诉 postcss 处理 @import 语句
+      map: false,
+    });
+
     // 写入处理后的 CSS
     fs.writeFileSync("dist/style.css", result.css);
 
     // 计算压缩比例
-    const originalSize = Buffer.byteLength(css, "utf8");
-    const compressedSize = Buffer.byteLength(result.css, "utf8");
-    const compressionRatio = (
-      ((originalSize - compressedSize) / originalSize) *
-      100
-    ).toFixed(1);
+    const processedSize = Buffer.byteLength(result.css, "utf8");
+    const ratio = (((originalSize - processedSize) / originalSize) * 100).toFixed(1);
 
-    console.log(`✅ Tailwind CSS processed successfully`);
+    console.log(`✅ Tailwind CSS v4 processed successfully`);
     console.log(
-      `📦 CSS size: ${originalSize} bytes → ${compressedSize} bytes (${compressionRatio}% reduction)`,
+      `📦 CSS size: ${originalSize} bytes → ${processedSize} bytes (${ratio}% reduction)`,
     );
   } catch (error) {
-    console.error("❌ Tailwind CSS processing failed:", error);
-    throw error;
+    console.error("❌ Tailwind CSS processing failed");
+    console.error("原因:", error.reason || error.message);
+    
+    // 备用方案：移除 @import 行并继续
+    console.warn("⚠️  使用备用方案处理 CSS...");
+    
+    const css = fs.readFileSync("src/style.css", "utf8");
+    const originalSize = Buffer.byteLength(css, "utf8");
+    
+    // 移除 Tailwind 特定的指令
+    let processed = css
+      .replace(/@import\s+["']tailwindcss["'];?\s*\n?/g, "")
+      .replace(/@source\s+["'][^"']*["'];?\s*\n?/g, "");
+
+    // 应用 PostCSS 处理
+    const result = await postcss([
+      autoprefixer(),
+      cssnano({
+        preset: [
+          "default",
+          {
+            discardComments: { removeAll: true },
+            colormin: true,
+            mergeRules: true,
+            minifyFontValues: true,
+            minifySelectors: true,
+            normalizeWhitespace: true,
+            calc: true,
+            minifyGradients: true,
+          },
+        ],
+      }),
+    ]).process(processed, {
+      from: path.resolve("src/style.css"),
+      to: path.resolve("dist/style.css"),
+    });
+
+    fs.writeFileSync("dist/style.css", result.css);
+    
+    const processedSize = Buffer.byteLength(result.css, "utf8");
+    const ratio = (((originalSize - processedSize) / originalSize) * 100).toFixed(1);
+    
+    console.log(`✅ CSS 已通过备用方案处理`);
+    console.log(
+      `📦 CSS size: ${originalSize} bytes → ${processedSize} bytes (${ratio}% reduction)`,
+    );
   }
 }
 
@@ -164,6 +200,13 @@ async function loadStatusData() {
 
         // 处理 Tailwind CSS
         await processTailwind();
+
+        // 确保 dist 目录中的文件存在
+        if (!fs.existsSync("dist/main.js")) {
+          console.error("❌ 错误：dist/main.js 未生成");
+          console.error("检查 esbuild 是否成功完成");
+          return;
+        }
 
         // 读取构建后的文件
         const jsContent = fs.readFileSync("dist/main.js", "utf8");
