@@ -186,6 +186,23 @@ async function loadStatusData() {
           100
         ).toFixed(1);
 
+        // 获取缩小前的 HTML 大小（仅压缩）
+        const unminifiedHtml = htmlTemplate
+          .replace(
+            "<!-- CSS_PLACEHOLDER -->",
+            `<style type="text/tailwindcss">${fs.readFileSync("dist/style.css", "utf8")}</style>`,
+          )
+          .replace(
+            "<!-- JS_PLACEHOLDER -->",
+            `<script>${fs.readFileSync("dist/main.js", "utf8")}</script>`,
+          );
+        const unminifiedSize = Buffer.byteLength(unminifiedHtml, "utf8");
+
+        // 计算缩小效率
+        const minifyEfficiency = shouldMinify
+          ? (((unminifiedSize - finalSize) / unminifiedSize) * 100).toFixed(1)
+          : 0;
+
         // 清理临时文件
         fs.rmSync("dist", { recursive: true, force: true });
 
@@ -200,10 +217,24 @@ async function loadStatusData() {
           `✅ Built ${outputFile} for ${mode} (${minifyStatus}) with Tailwind CSS v4`,
         );
         console.log(
-          `📦 Final HTML size: ${originalHtmlSize} bytes → ${finalSize} bytes (${htmlCompressionRatio}% reduction)`,
+          `📦 File size breakdown:`,
         );
         console.log(
-          `🎯 Final file: ${outputPath} (${(finalSize / 1024).toFixed(1)} KB)`,
+          `   • Original (unminified): ${unminifiedSize} bytes (${(unminifiedSize / 1024).toFixed(1)} KB)`,
+        );
+        console.log(
+          `   • Final size: ${finalSize} bytes (${(finalSize / 1024).toFixed(1)} KB)`,
+        );
+        if (shouldMinify) {
+          console.log(
+            `   • Minify reduction: ${unminifiedSize - finalSize} bytes (${minifyEfficiency}% smaller)`,
+          );
+        }
+        console.log(
+          `📊 Overall reduction: ${originalHtmlSize - finalSize} bytes (${htmlCompressionRatio}% from template)`,
+        );
+        console.log(
+          `🎯 Final file: ${outputPath}`,
         );
       } catch (error) {
         console.error("❌ Build failed:", error.message);
