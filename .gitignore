@@ -164,3 +164,7 @@ pids
 
 /debug
 /dist
+
+# Auto-generated source files from config.json (build-time generated)
+src/css-constants.js
+src/fields.js

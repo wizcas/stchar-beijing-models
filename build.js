@@ -2,6 +2,209 @@ const esbuild = require("esbuild");
 const fs = require("fs");
 const path = require("path");
 
+// ==================== 代码生成模块 ====================
+// 从 config.json 生成源代码
+
+function loadConfig() {
+  const configPath = path.join(__dirname, "src", "config.json");
+  const configContent = fs.readFileSync(configPath, "utf8");
+  return JSON.parse(configContent);
+}
+
+// 生成 css-constants.js
+function generateCssConstants(config) {
+  const { cssClasses, tagClasses, collapsibleClasses } = config;
+  
+  let code = `// CSS类名常量定义模块 (自动生成，勿手动修改)\n\n`;
+  code += `// CSS类名常量对象\n`;
+  code += `const CSS_CLASSES = {\n`;
+  
+  for (const [key, value] of Object.entries(cssClasses)) {
+    code += `  ${key}: "${value}",\n`;
+  }
+  
+  code += `};\n\n`;
+  code += `// 标签相关的CSS类名\n`;
+  code += `const TAG_CLASSES = {\n`;
+  
+  for (const [key, value] of Object.entries(tagClasses)) {
+    code += `  ${key}: "${value}",\n`;
+  }
+  
+  code += `};\n\n`;
+  code += `// 可折叠内容相关的CSS类名\n`;
+  code += `const COLLAPSIBLE_CLASSES = {\n`;
+  
+  for (const [key, value] of Object.entries(collapsibleClasses)) {
+    code += `  ${key}: "${value}",\n`;
+  }
+  
+  code += `};\n\n`;
+  code += `// 导出CSS常量\n`;
+  code += `export { CSS_CLASSES, TAG_CLASSES, COLLAPSIBLE_CLASSES };\n`;
+  
+  return code;
+}
+
+// 生成 fields.js
+function generateFieldsModule(config) {
+  const { fields, fieldOrder, userFields, womanFields, systemFields } = config;
+  
+  let code = `// 字段配置和顺序管理模块 (自动生成，勿手动修改)\n\n`;
+  code += `// 字段配置数组 - 定义所有字段及其emoji\n`;
+  code += `const fieldConfig = [\n`;
+  
+  fields.forEach((field) => {
+    code += `  { name: "${field.name}", emoji: "${field.emoji}" },\n`;
+  });
+  
+  code += `];\n\n`;
+  code += `// 从字段配置生成通用字段顺序\n`;
+  code += `const universalFieldOrder = fieldConfig.map((field) => field.name);\n\n`;
+  code += `// 从字段配置生成emoji映射\n`;
+  code += `const emojiMap = {};\n`;
+  code += `fieldConfig.forEach((field) => {\n`;
+  code += `  emojiMap[field.name] = field.emoji;\n`;
+  code += `});\n\n`;
+  code += `// 为字段名添加emoji\n`;
+  code += `function addEmojiToFieldName(fieldName) {\n`;
+  code += `  const emoji = emojiMap[fieldName];\n`;
+  code += `  return emoji ? emoji + ' ' + fieldName : fieldName;\n`;
+  code += `}\n\n`;
+  code += `// 特定角色类型的字段顺序配置\n`;
+  code += `const fieldOrder = {\n`;
+  
+  for (const [key, value] of Object.entries(fieldOrder)) {
+    code += `  "${key}": [${value.map((f) => `"${f}"`).join(", ")}],\n`;
+  }
+  
+  code += `};\n\n`;
+  code += `// 创建通用字段顺序的Set，提高查找性能\n`;
+  code += `const universalFieldOrderSet = new Set(universalFieldOrder);\n\n`;
+  code += `// 预计算字段顺序的Set，提高查找性能\n`;
+  code += `const fieldOrderSets = {};\n`;
+  code += `for (const [section, fields] of Object.entries(fieldOrder)) {\n`;
+  code += `  fieldOrderSets[section] = new Set(fields);\n`;
+  code += `}\n\n`;
+  code += `// 检测角色类型的函数\n`;
+  code += `function detectCharacterType(sectionName, sectionData) {\n`;
+  code += `  // 检查是否包含用户特有字段\n`;
+  code += `  const userFields = [${userFields.map((f) => `"${f}"`).join(", ")}];\n`;
+  code += `  const hasUserFields = userFields.some(\n`;
+  code += `    (field) => sectionData && sectionData.hasOwnProperty(field),\n`;
+  code += `  );\n\n`;
+  code += `  // 检查是否包含女性角色特有字段\n`;
+  code += `  const womanFields = [${womanFields.map((f) => `"${f}"`).join(", ")}];\n`;
+  code += `  const hasWomanFields = womanFields.some(\n`;
+  code += `    (field) => sectionData && sectionData.hasOwnProperty(field),\n`;
+  code += `  );\n\n`;
+  code += `  // 检查是否为系统分类字段\n`;
+  code += `  const systemFields = [${systemFields.map((f) => `"${f}"`).join(", ")}];\n`;
+  code += `  const isSystemField = systemFields.includes(sectionName);\n\n`;
+  code += `  if (hasUserFields || sectionName.includes("user") || sectionName.includes("小二")) {\n`;
+  code += `    return "user";\n`;
+  code += `  } else if (isSystemField) {\n`;
+  code += `    return "system";\n`;
+  code += `  } else if (hasWomanFields || (!hasUserFields && !isSystemField)) {\n`;
+  code += `    return "woman";\n`;
+  code += `  }\n\n`;
+  code += `  return "unknown";\n`;
+  code += `}\n\n`;
+  code += `// 获取字段顺序的函数\n`;
+  code += `function getFieldOrder(sectionName, sectionData = null) {\n`;
+  code += `  // 优先使用精确匹配的特定配置\n`;
+  code += `  if (fieldOrder[sectionName]) {\n`;
+  code += `    return fieldOrder[sectionName];\n`;
+  code += `  }\n\n`;
+  code += `  // 基于内容检测角色类型\n`;
+  code += `  const characterType = detectCharacterType(sectionName, sectionData);\n\n`;
+  code += `  switch (characterType) {\n`;
+  code += `    case "user":\n`;
+  code += `      return fieldOrder["{{user}}"];\n`;
+  code += `    case "woman":\n`;
+  code += `      return fieldOrder["女人"];\n`;
+  code += `    case "system":\n`;
+  code += `      // 对于系统分类，尝试使用对应的配置\n`;
+  code += `      if (fieldOrder[sectionName]) {\n`;
+  code += `        return fieldOrder[sectionName];\n`;
+  code += `      }\n`;
+  code += `      return universalFieldOrder;\n`;
+  code += `    default:\n`;
+  code += `      return universalFieldOrder;\n`;
+  code += `  }\n`;
+  code += `}\n\n`;
+  code += `// 获取字段顺序Set的函数\n`;
+  code += `function getFieldOrderSet(sectionName, sectionData = null) {\n`;
+  code += `  // 优先使用精确匹配的特定配置\n`;
+  code += `  if (fieldOrderSets[sectionName]) {\n`;
+  code += `    return fieldOrderSets[sectionName];\n`;
+  code += `  }\n\n`;
+  code += `  // 基于内容检测角色类型\n`;
+  code += `  const characterType = detectCharacterType(sectionName, sectionData);\n\n`;
+  code += `  switch (characterType) {\n`;
+  code += `    case "user":\n`;
+  code += `      return fieldOrderSets["{{user}}"] || new Set(fieldOrder["{{user}}"]);\n`;
+  code += `    case "woman":\n`;
+  code += `      return fieldOrderSets["女人"] || new Set(fieldOrder["女人"]);\n`;
+  code += `    case "system":\n`;
+  code += `      if (fieldOrderSets[sectionName]) {\n`;
+  code += `        return fieldOrderSets[sectionName];\n`;
+  code += `      }\n`;
+  code += `      return universalFieldOrderSet;\n`;
+  code += `    default:\n`;
+  code += `      return universalFieldOrderSet;\n`;
+  code += `  }\n`;
+  code += `}\n\n`;
+  code += `// 导出所有字段相关的功能\n`;
+  code += `export {\n`;
+  code += `  fieldConfig,\n`;
+  code += `  universalFieldOrder,\n`;
+  code += `  universalFieldOrderSet,\n`;
+  code += `  emojiMap,\n`;
+  code += `  addEmojiToFieldName,\n`;
+  code += `  fieldOrder,\n`;
+  code += `  fieldOrderSets,\n`;
+  code += `  detectCharacterType,\n`;
+  code += `  getFieldOrder,\n`;
+  code += `  getFieldOrderSet,\n`;
+  code += `};\n`;
+  
+  return code;
+}
+
+// 生成 Tailwind 配置脚本
+function generateTailwindConfig(colors) {
+  const entries = Object.entries(colors).map(
+    ([key, _]) => `'${key}': 'var(--color-${key})'`
+  );
+  
+  return entries.join(", ");
+}
+
+// 执行代码生成
+function generateSourceFiles() {
+  try {
+    const config = loadConfig();
+    
+    // 生成 css-constants.js
+    const cssConstantsCode = generateCssConstants(config);
+    fs.writeFileSync(path.join(__dirname, "src", "css-constants.js"), cssConstantsCode);
+    console.log("✅ Generated src/css-constants.js");
+    
+    // 生成 fields.js
+    const fieldsCode = generateFieldsModule(config);
+    fs.writeFileSync(path.join(__dirname, "src", "fields.js"), fieldsCode);
+    console.log("✅ Generated src/fields.js");
+    
+    return config;
+  } catch (error) {
+    console.error("❌ Code generation failed:", error.message);
+    throw error;
+  }
+}
+
+// ==================== 原始 build.js 代码 ====================
+
 // HTML 压缩函数
 function compressHtml(html) {
   return (
@@ -142,8 +345,12 @@ async function loadStatusData() {
         const cssContent = fs.readFileSync("dist/style.css", "utf8");
         const htmlTemplate = fs.readFileSync("src/index.html", "utf8");
 
-        // 内联到HTML中
+        // 生成 Tailwind 配置脚本
+        const tailwindConfigScript = generateTailwindConfig(config.colors);
+
+        // 内联到HTML中（将 Tailwind 配置注入到第二个 script 标签）
         let finalHtml = htmlTemplate
+          .replace("<!-- TAILWIND_CONFIG -->", `<script>tailwind.config = { theme: { extend: { colors: { ${tailwindConfigScript} } } } };</script>`)
           .replace("<!-- CSS_PLACEHOLDER -->", `<style type="text/tailwindcss">${cssContent}</style>`)
           .replace("<!-- JS_PLACEHOLDER -->", `<script>${jsContent}</script>`);
 
@@ -248,6 +455,10 @@ const buildOptions = {
   external: ["tailwindcss"], // 排除 tailwindcss 从 bundle 中
   plugins: [htmlInlinePlugin],
 };
+
+// 在构建前生成源文件
+console.log("🔧 Generating source files from config.json...");
+const config = generateSourceFiles();
 
 if (process.argv.includes("--watch")) {
   esbuild
