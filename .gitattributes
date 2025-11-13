@@ -1,0 +1,30 @@
+# Auto detect text files and normalize line endings to CRLF
+* text=auto eol=crlf
+
+# Source code - use CRLF
+*.js text eol=crlf
+*.ts text eol=crlf
+*.tsx text eol=crlf
+*.jsx text eol=crlf
+*.json text eol=crlf
+*.css text eol=crlf
+*.scss text eol=crlf
+*.html text eol=crlf
+*.md text eol=crlf
+*.xml text eol=crlf
+*.yml text eol=crlf
+*.yaml text eol=crlf
+
+# Batch files - also CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary

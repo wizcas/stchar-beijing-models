@@ -200,7 +200,7 @@ async function loadStatusData() {
         const outputPath = path.join(outputDir, outputFile);
 
         // 确保输出目录存在
-        if (isProduction && !fs.existsSync(outputDir)) {
+        if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
 
