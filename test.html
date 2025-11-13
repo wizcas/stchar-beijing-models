@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailwind CSS v4 测试</title>
+    <style>
+        /* 从生成的 CSS 中复制一些关键样式来测试 */
+        :root {
+            --font-display: "Frex Sans GB VF",
+                          "Microsoft YaHei", "Segoe UI",
+                          "SF Pro Display", "PingFang SC", "Helvetica Neue",
+                          "Roboto", "Noto Sans CJK SC", "Droid Sans",
+                          "-apple-system", "BlinkMacSystemFont",
+                          "Ubuntu", "Cantarell", "Noto Sans", "Liberation Sans",
+                          sans-serif;
+            --color-dark-bg: #1a1a1a;
+            --color-dark-surface: #2a2a2a;
+            --color-dark-surface-alt: #333;
+            --color-dark-surface-hover: #444;
+            --color-dark-border: #444;
+            --color-dark-border-light: #666;
+            --color-text-primary: #e0e0e0;
+            --color-text-secondary: #ccc;
+            --color-accent-green: #00ff00;
+            --color-accent-blue: #00aaff;
+            --color-accent-orange: #ffaa00;
+            --color-accent-red: #ff6600;
+            --spacing-container: 20px;
+        }
+        
+        body {
+            font-family: var(--font-display);
+            background: var(--color-dark-bg);
+            color: var(--color-text-primary);
+            line-height: 1.4;
+            padding: var(--spacing-container);
+            margin: 0;
+        }
+        
+        .max-w-\[1400px\] { max-width: 1400px; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .gap-5 { gap: 1.25rem; }
+        .bg-\[var\(--color-dark-surface\)\] { background-color: var(--color-dark-surface); }
+        .border { border-width: 1px; }
+        .border-\[var\(--color-dark-border\)\] { border-color: var(--color-dark-border); }
+        .p-5 { padding: 1.25rem; }
+        .rounded { border-radius: 0.25rem; }
+        .text-\[var\(--color-accent-green\)\] { color: var(--color-accent-green); }
+        .text-lg { font-size: 1.125rem; }
+        .font-bold { font-weight: 700; }
+        .mb-4 { margin-bottom: 1rem; }
+        .uppercase { text-transform: uppercase; }
+        .border-b { border-bottom-width: 1px; }
+        .pb-2 { padding-bottom: 0.5rem; }
+        .text-left { text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="max-w-[1400px] mx-auto">
+        <div class="flex flex-col gap-5">
+            <div class="bg-[var(--color-dark-surface)] border border-[var(--color-dark-border)] p-5 rounded">
+                <div class="text-[var(--color-accent-green)] text-lg font-bold mb-4 uppercase border-b border-[var(--color-dark-border)] pb-2 text-left">
+                    🎉 Tailwind CSS v4 迁移成功！
+                </div>
+                <p>这个页面展示了我们成功迁移到 Tailwind CSS v4 的结果：</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>✅ CSS-first 配置</li>
+                    <li>✅ 自定义主题变量</li>
+                    <li>✅ 现代化的工具类</li>
+                    <li>✅ 响应式设计支持</li>
+                    <li>✅ PostCSS 集成</li>
+                </ul>
+            </div>
+            
+            <div class="bg-[var(--color-dark-surface)] border border-[var(--color-dark-border)] p-5 rounded">
+                <div class="text-[var(--color-accent-blue)] text-lg font-bold mb-4 text-left">
+                    🎨 主题变量测试
+                </div>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px;">
+                    <span style="color: var(--color-accent-orange); font-weight: bold;">背景色:</span>
+                    <span style="color: var(--color-text-primary);">var(--color-dark-bg)</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px;">
+                    <span style="color: var(--color-accent-orange); font-weight: bold;">表面色:</span>
+                    <span style="color: var(--color-text-primary);">var(--color-dark-surface)</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px;">
+                    <span style="color: var(--color-accent-orange); font-weight: bold;">字体:</span>
+                    <span style="color: var(--color-text-primary);">var(--font-display)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字体加载测试</title>
+    <style>
+        @import url("https://fontsapi.zeoseven.com/670/main/result.css");
+        
+        body {
+            font-family: "Frex Sans GB VF", 
+                        "Microsoft YaHei", "Segoe UI", 
+                        "SF Pro Display", "PingFang SC", "Helvetica Neue",
+                        "Roboto", "Noto Sans CJK SC", "Droid Sans",
+                        "-apple-system", "BlinkMacSystemFont",
+                        "Ubuntu", "Cantarell", "Noto Sans", "Liberation Sans",
+                        sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .font-info {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .test-text {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        
+        .weight-test {
+            margin: 10px 0;
+        }
+        
+        .weight-100 { font-weight: 100; }
+        .weight-200 { font-weight: 200; }
+        .weight-300 { font-weight: 300; }
+        .weight-400 { font-weight: 400; }
+        .weight-500 { font-weight: 500; }
+        .weight-600 { font-weight: 600; }
+        .weight-700 { font-weight: 700; }
+        .weight-800 { font-weight: 800; }
+        .weight-900 { font-weight: 900; }
+    </style>
+</head>
+<body>
+    <h1>🔤 字体加载测试</h1>
+    
+    <div class="test-section">
+        <h2>📋 当前字体信息</h2>
+        <div class="font-info" id="font-info">
+            正在检测字体...
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📝 文本渲染测试</h2>
+        <div class="test-text">
+            <strong>中文测试：</strong>这是一段中文测试文本，用于验证 Frex Sans GB VF 字体是否正确加载。
+        </div>
+        <div class="test-text">
+            <strong>English Test:</strong> This is an English test text to verify the Frex Sans GB VF font loading.
+        </div>
+        <div class="test-text">
+            <strong>数字测试：</strong>0123456789 +-*/=()[]{}
+        </div>
+        <div class="test-text">
+            <strong>特殊字符：</strong>！@#￥%……&*（）——+｜、。？：""《》
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>⚖️ 字重测试</h2>
+        <div class="weight-test weight-100">字重 100 (Thin): 轻薄字体测试</div>
+        <div class="weight-test weight-200">字重 200 (Extra Light): 超轻字体测试</div>
+        <div class="weight-test weight-300">字重 300 (Light): 轻字体测试</div>
+        <div class="weight-test weight-400">字重 400 (Normal): 正常字体测试</div>
+        <div class="weight-test weight-500">字重 500 (Medium): 中等字体测试</div>
+        <div class="weight-test weight-600">字重 600 (Semi Bold): 半粗字体测试</div>
+        <div class="weight-test weight-700">字重 700 (Bold): 粗体字体测试</div>
+        <div class="weight-test weight-800">字重 800 (Extra Bold): 超粗字体测试</div>
+        <div class="weight-test weight-900">字重 900 (Black): 黑体字体测试</div>
+    </div>
+
+    <script>
+        // 检测当前使用的字体
+        function detectFont() {
+            const element = document.createElement('span');
+            element.style.fontFamily = getComputedStyle(document.body).fontFamily;
+            element.textContent = 'Test';
+            document.body.appendChild(element);
+            
+            const computedStyle = getComputedStyle(element);
+            const fontFamily = computedStyle.fontFamily;
+            
+            document.body.removeChild(element);
+            
+            return fontFamily;
+        }
+        
+        // 检查字体是否加载
+        function checkFontLoading() {
+            const fontInfo = document.getElementById('font-info');
+            const detectedFont = detectFont();
+            
+            fontInfo.innerHTML = `
+                <strong>检测到的字体栈：</strong><br>
+                ${detectedFont}<br><br>
+                <strong>Frex Sans GB VF 加载状态：</strong><br>
+                ${detectedFont.includes('Frex Sans GB VF') ? '✅ 已加载' : '❌ 未加载，使用 fallback 字体'}
+            `;
+        }
+        
+        // 页面加载完成后检查字体
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟检查，确保字体有时间加载
+            setTimeout(checkFontLoading, 1000);
+        });
+        
+        // 字体加载事件监听
+        if ('fonts' in document) {
+            document.fonts.ready.then(function() {
+                checkFontLoading();
+            });
+        }
+    </script>
+</body>
+</html>

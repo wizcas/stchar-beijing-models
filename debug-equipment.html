@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .debug { background: #333; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Equipment Debug Test</h1>
+    <div id="debug-output"></div>
+    
+    <script>
+        // 测试器材数据
+        const testData = {
+            "器材": {
+                "机身": ["Canon EOS R6 (二手)"],
+                "镜头": ["Canon RF 50mm f/1.8 STM", "Canon RF 85mm f/2 MACRO IS STM"],
+                "灯光": ["神牛 Godox AD200 Pro", "神牛 Godox AD200 Pro", "神牛 Godox XPro-C 引闪器"],
+                "配件": ["专业摄影背包", "三脚架", "灯架", "高速SD卡", "备用电池"],
+                "其他": []
+            }
+        };
+        
+        // 测试检测函数
+        function isEquipmentObject(obj) {
+            const values = Object.values(obj);
+            return values.length > 0 && values.every((value) => Array.isArray(value));
+        }
+        
+        // 输出调试信息
+        const debugOutput = document.getElementById('debug-output');
+        
+        function addDebug(title, content) {
+            const div = document.createElement('div');
+            div.className = 'debug';
+            div.innerHTML = `<strong>${title}:</strong><br><pre>${JSON.stringify(content, null, 2)}</pre>`;
+            debugOutput.appendChild(div);
+        }
+        
+        // 测试器材对象
+        const equipmentData = testData["器材"];
+        addDebug("Equipment Data", equipmentData);
+        addDebug("Object.values(equipmentData)", Object.values(equipmentData));
+        addDebug("isEquipmentObject(equipmentData)", isEquipmentObject(equipmentData));
+        
+        // 测试每个值是否为数组
+        Object.entries(equipmentData).forEach(([key, value]) => {
+            addDebug(`${key} is Array`, Array.isArray(value));
+        });
+        
+        // 测试 every 函数
+        const values = Object.values(equipmentData);
+        addDebug("values.every(v => Array.isArray(v))", values.every(v => Array.isArray(v)));
+        
+        console.log("Equipment detection test:", {
+            data: equipmentData,
+            isEquipment: isEquipmentObject(equipmentData)
+        });
+    </script>
+</body>
+</html>

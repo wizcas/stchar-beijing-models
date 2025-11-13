@@ -1,0 +1,318 @@
+@import "tailwindcss";
+
+@source "src/**/*.{html,js}";
+
+@theme {
+  /* 自定义字体 - 跨平台 fallback */
+  --font-body:
+    "Frex Sans GB VF", /* Windows */ "Microsoft YaHei", "Segoe UI",
+    /* macOS */ "SF Pro Display", "PingFang SC", "Helvetica Neue",
+    /* Android */ "Roboto", "Noto Sans CJK SC", "Droid Sans",
+    /* iOS */ "-apple-system", "BlinkMacSystemFont", /* Linux */ "Ubuntu",
+    "Cantarell", "Noto Sans", "Liberation Sans", /* 通用 fallback */ sans-serif;
+  --font-display:
+    /* 优先字体 */
+    "Maoken Glitch Serif", "Source Han Serif SC",
+    /* Windows 中文衬线字体 */ "SimSun", "NSimSun", "FangSong", "KaiTi",
+    "Times New Roman", /* macOS 中文衬线字体 */ "Songti SC", "STSong",
+    "Kaiti SC", "STKaiti", "Times",
+    /* Android 中文衬线字体 */ "Noto Serif CJK SC", "Noto Serif SC",
+    "Droid Serif", /* iOS 衬线字体 */ "Times New Roman", "Georgia",
+    /* Linux 中文衬线字体 */ "AR PL UMing CN", "AR PL SungtiL GB", "SimSun",
+    "Liberation Serif", /* 通用 fallback */ serif;
+
+  /* 摄影艺术主题配色 */
+  --color-dark-bg: #333024;
+  --color-surface-primary: #1a1a1a; /* 主要表面 - 相机机身 */
+  --color-surface-secondary: #2a2a2a; /* 次要表面 - 镜头环 */
+  --color-surface-accent: #1e1e1e; /* 强调表面 - 取景器 */
+  --color-border-subtle: #333; /* 细微边框 - 机身线条 */
+  --color-border-accent: #444; /* 强调边框 - 镜头边缘 */
+  --color-text-primary: #f5f5f5; /* 主要文字 - 清晰对比 */
+  --color-text-secondary: #d0d0d0; /* 次要文字 - 柔和对比 */
+  --color-text-muted: #999; /* 静音文字 - 参数显示 */
+
+  /* 摄影主题强调色 */
+  --color-accent-gold: #d4af37; /* 金色 - 专业品质 */
+  --color-accent-silver: #c0c0c0; /* 银色 - 金属质感 */
+  --color-accent-amber: #ffb000; /* 琥珀色 - 暖光 */
+  --color-accent-cyan: #00bcd4; /* 青色 - 冷光 */
+  --color-accent-red: #e53e3e; /* 红色 - 录制指示 */
+
+  /* 摄影主题间距和尺寸 */
+  --spacing-container: 24px; /* 容器边距 */
+  --spacing-section: 20px; /* 区块间距 */
+  --spacing-field: 12px; /* 字段间距 */
+  --radius-card: 8px; /* 卡片圆角 */
+  --radius-element: 4px; /* 元素圆角 */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4); /* 卡片阴影 */
+  --shadow-element: 0 2px 6px rgba(0, 0, 0, 0.3); /* 元素阴影 */
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-weight: normal;
+    background: var(--color-dark-bg);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    padding: var(--spacing-container);
+    /* 摄影主题背景纹理 */
+    background-image:
+      radial-gradient(
+        circle at 25% 25%,
+        rgba(212, 175, 55, 0.02) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 75% 75%,
+        rgba(0, 188, 212, 0.02) 0%,
+        transparent 50%
+      );
+  }
+}
+
+@layer components {
+  /* 页面标题样式 */
+  .page-title {
+    @apply text-2xl md:text-3xl font-bold tracking-wide mb-4 font-display;
+    background: linear-gradient(
+      120deg,
+      #c93639 47%,
+      var(--color-accent-cyan) 50%,
+      var(--color-accent-red) 53%,
+      #b03032 60%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    background-position-x: -200%;
+    animation: titleGradient 10s linear infinite;
+  }
+
+  @keyframes titleGradient {
+    30% {
+      background-position-x: 0%;
+    }
+    60% {
+      background-position-x: 100%;
+    }
+    100% {
+      background-position-x: 200%;
+    }
+  }
+
+  .title-user {
+  }
+
+  .title-text {
+    @apply ml-2;
+  }
+
+  /* 响应式标题 */
+  @media (max-width: 767px) {
+    .page-title {
+      @apply text-2xl md:text-3xl mb-3;
+    }
+
+    .title-user,
+    .title-text {
+      @apply block;
+    }
+
+    .title-text {
+      @apply ml-0 mt-1;
+    }
+
+    .title-underline {
+      width: 80px;
+      height: 2px;
+    }
+  }
+
+  /* 统一的 tag 样式 - 基于器材物品的样式 */
+  .tag-base {
+    @apply bg-[var(--color-dark-bg)] text-[var(--color-text-secondary)] px-3 py-1.5 border border-[var(--color-border-accent)] text-xs font-medium whitespace-nowrap rounded-full hover:bg-[var(--color-surface-primary)] transition-colors duration-200;
+  }
+
+  /* tag 容器样式 */
+  .tag-container {
+    @apply flex flex-wrap gap-2 items-start -mt-1;
+  }
+
+  /* 字段容器响应式样式 - 窄视口优化 */
+  .field-container {
+    @apply py-1.5 border-b border-gray-200/30;
+  }
+
+  .field-container:last-child {
+    @apply border-b-0;
+  }
+
+  /* 移动端：垂直布局，标题和值各占一行，更紧凑 */
+  @media (max-width: 767px) {
+    .field-container {
+      @apply flex flex-col gap-0.5 py-1;
+    }
+
+    .field-label {
+      @apply text-xs font-medium text-gray-300/80 min-w-0 mb-0;
+      line-height: 1.2;
+    }
+
+    .field-value {
+      @apply text-sm text-gray-100 min-w-0 pl-0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.3;
+    }
+
+    /* 移动端tag容器优化 */
+    .field-value .tag-container {
+      @apply gap-1.5 -mt-0;
+    }
+
+    /* 移动端tag样式优化 */
+    .field-value .tag-base {
+      @apply px-2 py-1 text-xs;
+    }
+  }
+
+  /* 桌面端：水平布局，保持原有样式 */
+  @media (min-width: 768px) {
+    .field-container {
+      @apply flex items-start gap-3;
+    }
+
+    .field-label {
+      @apply text-sm font-medium text-gray-300/80 min-w-0 flex-shrink-0;
+      width: "fit-content";
+    }
+
+    .field-value {
+      @apply text-sm text-gray-100 min-w-0 flex-1;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+  }
+
+  /* 女性角色卡片高度限制和滚动效果 */
+  .woman-card-content {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden; /* 严禁水平滚动条 */
+    scrollbar-width: thin; /* Firefox 细滚动条 */
+    scrollbar-color: var(--color-accent-silver) var(--color-surface-secondary);
+    position: relative;
+  }
+
+  /* 滚动渐变遮罩容器 */
+  .woman-card-scroll-container {
+    position: relative;
+    max-height: 400px;
+  }
+
+  /* 底部渐变遮罩 - 提示有更多内容 */
+  .woman-card-scroll-container::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--color-surface-primary) 100%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+  }
+
+  /* 当内容溢出时显示渐变 */
+  .woman-card-scroll-container.has-overflow::after {
+    opacity: 1;
+  }
+
+  /* Webkit 浏览器滚动条样式 */
+  .woman-card-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .woman-card-content::-webkit-scrollbar-track {
+    background: var(--color-surface-secondary);
+    border-radius: 3px;
+  }
+
+  .woman-card-content::-webkit-scrollbar-thumb {
+    background: var(--color-accent-silver);
+    border-radius: 3px;
+  }
+
+  .woman-card-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-amber);
+  }
+
+  /* 移动端整体布局优化 */
+  @media (max-width: 767px) {
+    /* 减少卡片内边距 */
+    .character-content {
+      @apply gap-3 p-5;
+    }
+
+    /* 减少子部分间距 */
+    .subsection-card {
+      @apply p-3;
+    }
+
+    /* 优化折叠卡片标题 */
+    .collapsible-title {
+      @apply text-sm py-2;
+    }
+
+    /* 减少女性角色卡片的滚动容器边距 */
+    .woman-card-scroll-container {
+      max-height: 350px; /* 移动端稍微减少高度 */
+    }
+
+    .woman-card-content {
+      max-height: 350px;
+    }
+  }
+
+  /* CSS Columns Masonry 布局 - 高性能瀑布流布局 (最大2列) */
+  .masonry-grid {
+    @apply mt-4;
+    display: block;
+    column-gap: 1rem; /* 16px gap */
+    column-count: 1; /* 默认1列 */
+  }
+
+  /* Masonry 项目样式 */
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+    width: 100%;
+    display: block;
+  }
+
+  /* 响应式列数控制 - 最大2列 */
+  @media (min-width: 768px) {
+    .masonry-grid {
+      column-count: 2; /* 桌面端最大2列 */
+    }
+  }
+
+  em {
+    @apply text-accent-cyan;
+  }
+}
