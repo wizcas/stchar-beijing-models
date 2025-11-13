@@ -1,6 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source "src/**/*.{html,js}";
+@source "src/**/*.html";
 
 @theme {
   /* 自定义字体 - 跨平台 fallback */
