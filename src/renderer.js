@@ -361,9 +361,15 @@ function createCollapsibleCard(
   const contentContainer = document.createElement("div");
   contentContainer.className = COLLAPSIBLE_CLASSES.CONTENT;
   contentContainer.style.display = "grid";
-  contentContainer.style.gridTemplateRows = "1fr";
+  contentContainer.style.gridTemplateRows = initiallyCollapsed ? "0fr" : "1fr";
   contentContainer.style.overflow = "hidden";
-  contentContainer.appendChild(content);
+  
+  // 包装内容以支持 grid 0fr/1fr 收缩
+  const contentWrapper = document.createElement("div");
+  contentWrapper.style.minHeight = "0";
+  contentWrapper.style.overflow = "hidden";
+  contentWrapper.appendChild(content);
+  contentContainer.appendChild(contentWrapper);
   cardDiv.appendChild(contentContainer);
 
   // 折叠状态管理
@@ -386,7 +392,7 @@ function createCollapsibleCard(
       resizeObserver = new ResizeObserver(() => {
         // 当内容大小变化时，grid 自动重新计算，无需手动干预
       });
-      resizeObserver.observe(content);
+      resizeObserver.observe(contentWrapper);
     }
   }
 
