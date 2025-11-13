@@ -4,35 +4,35 @@
 const CSS_CLASSES = {
   // 字段网格布局 (140 chars, used 10+ times)
   FIELD_GRID:
-    "grid grid-cols-[140px_1fr] md:grid-cols-[120px_1fr] sm:grid-cols-1 gap-2 md:gap-2 sm:gap-1.5 py-1 items-start border-b border-[var(--color-border-subtle)] last:border-b-0",
+    "grid grid-cols-[140px_1fr] md:grid-cols-[120px_1fr] sm:grid-cols-1 gap-2 md:gap-2 sm:gap-1.5 py-1 items-start border-b border-border-subtle last:border-b-0",
 
   // 字段标签样式 (90 chars, used 10+ times)
   FIELD_LABEL:
-    "text-[var(--color-accent-silver)] font-semibold self-start sm:mb-2 text-sm tracking-wide",
+    "text-accent-silver font-semibold self-start sm:mb-2 text-sm tracking-wide",
 
   // 字段值样式 (70 chars, used 10+ times)
   FIELD_VALUE:
-    "text-[var(--color-text-primary)] self-start text-sm leading-relaxed",
+    "text-text-primary self-start text-sm leading-relaxed",
 
   // 子部分卡片样式 (150 chars, used 5+ times)
   SUBSECTION_CARD:
-    "bg-[var(--color-surface-accent)] border border-[var(--color-border-accent)] p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2",
+    "bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2",
 
   // 部分标题样式 (100 chars, used 5+ times)
   SECTION_TITLE:
-    "text-[var(--color-accent-amber)] font-semibold text-left text-md tracking-wide flex items-center",
+    "text-accent-amber font-semibold text-left text-md tracking-wide flex items-center",
 
-   // 器材项目样式 (130 chars, used 3+ times)
+    // 器材项目样式 (130 chars, used 3+ times)
   EQUIPMENT_ITEM:
-    "bg-gradient-to-br from-[var(--color-surface-secondary)] to-[var(--color-surface-accent)] border border-[var(--color-border-subtle)] p-2.5 rounded-[var(--radius-element)]",
+    "bg-gradient-to-br from-surface-secondary to-surface-accent border border-border-subtle p-2.5 rounded-[var(--radius-element)]",
 
   // 器材项目全宽样式 (160 chars, used 1+ times)
   EQUIPMENT_ITEM_FULL:
-    "bg-gradient-to-br from-[var(--color-surface-secondary)] to-[var(--color-surface-accent)] border border-[var(--color-border-subtle)] p-2.5 rounded-[var(--radius-element)] col-span-1 lg:col-span-full",
+    "bg-gradient-to-br from-surface-secondary to-surface-accent border border-border-subtle p-2.5 rounded-[var(--radius-element)] col-span-1 lg:col-span-full",
 
   // 类别标题样式 (80 chars, used 3+ times)
   CATEGORY_TITLE:
-    "text-[var(--color-accent-red)] font-semibold mb-2 text-sm tracking-wide uppercase",
+    "text-accent-red font-semibold mb-2 text-sm tracking-wide uppercase",
 
   // 可折叠标题容器 (140 chars, used 1+ times)
   COLLAPSIBLE_TITLE:
@@ -40,11 +40,11 @@ const CSS_CLASSES = {
 
   // 折叠图标 (90 chars, used 1+ times)
   COLLAPSE_ICON:
-    "text-[var(--color-accent-amber)] text-lg font-bold transition-transform duration-200 ease-in-out",
+    "text-accent-amber text-lg font-bold transition-transform duration-200 ease-in-out",
 
   // 数组项目样式 (120 chars, used 2+ times)
   ARRAY_ITEM:
-    "bg-[var(--color-surface-secondary)] p-2 border-l-4 border-l-[var(--color-accent-silver)] rounded-[var(--radius-element)] flex flex-col gap-2",
+    "bg-surface-secondary p-2 border-l-4 border-l-accent-silver rounded-[var(--radius-element)] flex flex-col gap-2",
 
   // 网格布局
   SUBSECTIONS_GRID:
