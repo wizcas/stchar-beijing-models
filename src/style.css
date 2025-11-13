@@ -201,7 +201,7 @@
 
   /* 女性角色卡片高度限制和滚动效果 */
   .woman-card-content {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     overflow-x: hidden; /* 严禁水平滚动条 */
     scrollbar-width: thin; /* Firefox 细滚动条 */
@@ -212,7 +212,7 @@
   /* 滚动渐变遮罩容器 */
   .woman-card-scroll-container {
     position: relative;
-    max-height: 300px;
+    max-height: 400px;
   }
 
   /* 底部渐变遮罩 - 提示有更多内容 */
@@ -277,11 +277,11 @@
 
      /* 减少女性角色卡片的滚动容器边距 */
     .woman-card-scroll-container {
-      max-height: 280px; /* 移动端稍微减少高度 */
+      max-height: 350px; /* 移动端稍微减少高度 */
     }
 
     .woman-card-content {
-      max-height: 280px;
+      max-height: 350px;
     }
   }
 
