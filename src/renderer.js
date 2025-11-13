@@ -386,17 +386,17 @@ function createCollapsibleCard(
     } else {
       updateContentHeight();
       collapseIcon.style.transform = "rotate(0deg)";
-      // 立即更新父级高度，避免闪烁
+      // 立即更新父级高度
       updateParentCollapsibleHeight(contentContainer);
     }
 
-    // 只在展开时延迟二次检查，确保所有嵌套动画完成
-    if (!isCollapsed) {
-      setTimeout(() => {
+    // 延迟检查以处理嵌套元素动画（如果有的话）
+    setTimeout(() => {
+      if (!isCollapsed) {
         updateParentCollapsibleHeight(contentContainer);
         updateContentHeight();
-      }, 100);
-    }
+      }
+    }, 50);
   });
 
   // 窗口大小变化时更新高度

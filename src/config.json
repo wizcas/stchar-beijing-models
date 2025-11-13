@@ -45,7 +45,7 @@
     "CONTAINER": "tag-container"
   },
   "collapsibleClasses": {
-    "CONTENT": "collapsible-content overflow-hidden transition-all duration-100 ease-in-out"
+    "CONTENT": "collapsible-content overflow-hidden"
   },
   "fields": [
     { "name": "行业等级", "emoji": "⭐" },
