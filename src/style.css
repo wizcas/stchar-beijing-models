@@ -135,7 +135,7 @@
 
   /* 统一的 tag 样式 - 基于器材物品的样式 */
   .tag-base {
-    @apply bg-[var(--color-black)] text-[var(--color-text-secondary)] px-3 py-0.5 border border-[var(--color-border-accent)] text-xs font-medium whitespace-nowrap rounded-full hover:bg-[var(--color-surface-primary)] transition-colors duration-200;
+    @apply bg-surface-primary text-text-secondary px-3 py-1.5 border border-border-accent text-xs font-medium whitespace-nowrap rounded-full hover:bg-surface-secondary transition-colors duration-200;
   }
 
   /* tag 容器样式 */

@@ -104,7 +104,7 @@ function renderCharacterSection(sectionName, sectionData, container) {
   const initiallyCollapsed = true;
 
   const cardStyles = {
-    cardClass: "bg-[var(--color-surface-primary)] border border-[var(--color-border-subtle)] rounded-[var(--radius-card)] shadow-[var(--shadow-card)]",
+    cardClass: CSS_CLASSES.CHARACTER_CARD,
     titleClass: CSS_CLASSES.SECTION_TITLE,
     useRawTitle: true
   };
