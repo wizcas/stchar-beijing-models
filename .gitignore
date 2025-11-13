@@ -161,3 +161,6 @@ pids
 
 # Yarn Integrity file
 .yarn-integrity
+
+/debug
+/dist
