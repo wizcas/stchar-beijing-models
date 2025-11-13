@@ -144,7 +144,7 @@ async function loadStatusData() {
 
         // 内联到HTML中
         let finalHtml = htmlTemplate
-          .replace("<!-- CSS_PLACEHOLDER -->", `<style>${cssContent}</style>`)
+          .replace("<!-- CSS_PLACEHOLDER -->", `<style type="text/tailwindcss">${cssContent}</style>`)
           .replace("<!-- JS_PLACEHOLDER -->", `<script>${jsContent}</script>`);
 
         // 根据标志决定是否压缩 HTML
