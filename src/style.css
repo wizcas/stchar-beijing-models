@@ -19,6 +19,7 @@
 
   /* 摄影艺术主题配色 */
   --color-dark-bg: #333024;
+  --color-surface-black: #000;
   --color-surface-primary: #1a1a1a; /* 主要表面 - 相机机身 */
   --color-surface-secondary: #2a2a2a; /* 次要表面 - 镜头环 */
   --color-surface-accent: #1e1e1e; /* 强调表面 - 取景器 */
@@ -135,7 +136,7 @@
 
   /* 统一的 tag 样式 - 基于器材物品的样式 */
   .tag-base {
-    @apply bg-surface-primary text-text-secondary px-3 py-1.5 border border-border-accent text-xs font-medium whitespace-nowrap rounded-full hover:bg-surface-secondary transition-colors duration-200;
+    @apply bg-surface-black text-text-secondary px-3 py-0.5 border border-border-accent text-xs font-medium whitespace-nowrap rounded-full hover:bg-surface-primary transition-colors duration-200;
   }
 
   /* tag 容器样式 */
