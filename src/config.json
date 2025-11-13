@@ -4,6 +4,7 @@
     "surface-primary": "var(--color-surface-primary)",
     "surface-secondary": "var(--color-surface-secondary)",
     "surface-accent": "var(--color-surface-accent)",
+    "surface-black": "var(--color-surface-black)",
     "border-subtle": "var(--color-border-subtle)",
     "border-accent": "var(--color-border-accent)",
     "text-primary": "var(--color-text-primary)",
