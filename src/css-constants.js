@@ -11,7 +11,8 @@ const CSS_CLASSES = {
     "text-[var(--color-accent-silver)] font-semibold self-start sm:mb-2 text-sm tracking-wide",
 
   // 字段值样式 (70 chars, used 10+ times)
-  FIELD_VALUE: "text-[var(--color-text-primary)] self-start text-sm leading-relaxed",
+  FIELD_VALUE:
+    "text-[var(--color-text-primary)] self-start text-sm leading-relaxed",
 
   // 子部分卡片样式 (150 chars, used 5+ times)
   SUBSECTION_CARD:
@@ -19,7 +20,7 @@ const CSS_CLASSES = {
 
   // 部分标题样式 (100 chars, used 5+ times)
   SECTION_TITLE:
-    "text-[var(--color-accent-amber)] font-semibold text-left text-lg tracking-wide flex items-center",
+    "text-[var(--color-accent-amber)] font-semibold text-left text-md tracking-wide flex items-center",
 
   // 器材项目样式 (130 chars, used 3+ times)
   EQUIPMENT_ITEM:
@@ -75,12 +76,9 @@ const TAG_CLASSES = {
 
 // 可折叠内容相关的CSS类名
 const COLLAPSIBLE_CLASSES = {
-  CONTENT: "collapsible-content overflow-hidden transition-all duration-200 ease-in-out",
+  CONTENT:
+    "collapsible-content overflow-hidden transition-all duration-200 ease-in-out",
 };
 
 // 导出CSS常量
-export {
-  CSS_CLASSES,
-  TAG_CLASSES,
-  COLLAPSIBLE_CLASSES,
-};
+export { CSS_CLASSES, TAG_CLASSES, COLLAPSIBLE_CLASSES };
