@@ -26,7 +26,7 @@
     "EQUIPMENT_ITEM_FULL": "bg-gradient-to-br from-surface-secondary to-surface-accent border border-border-subtle p-2.5 rounded-[var(--radius-element)] col-span-1 lg:col-span-full",
     "CATEGORY_TITLE": "text-accent-red font-semibold mb-2 text-sm tracking-wide uppercase",
     "COLLAPSIBLE_TITLE": "flex items-center justify-between cursor-pointer select-none p-3 rounded-[var(--radius-element)] hover:bg-surface-black transition-colors duration-200",
-    "COLLAPSE_ICON": "text-accent-amber text-lg font-bold transition-transform duration-200 ease-in-out",
+    "COLLAPSE_ICON": "text-accent-silver text-lg font-bold transition-transform duration-200 ease-in-out",
     "ARRAY_ITEM": "bg-surface-secondary p-2 border-l-4 border-l-accent-silver rounded-[var(--radius-element)] flex flex-col gap-2",
     "SUBSECTIONS_GRID": "grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3 mt-2",
     "EQUIPMENT_GRID": "grid grid-cols-1 lg:grid-cols-2 gap-2.5",

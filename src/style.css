@@ -18,13 +18,13 @@
     "Liberation Serif", /* 通用 fallback */ serif;
 
   /* 摄影艺术主题配色 */
-  --color-dark-bg: #333024;
-  --color-surface-black: #000;
-  --color-surface-primary: #1a1a1a; /* 主要表面 - 相机机身 */
-  --color-surface-secondary: #2a2a2a; /* 次要表面 - 镜头环 */
-  --color-surface-accent: #1e1e1e; /* 强调表面 - 取景器 */
-  --color-border-subtle: #333; /* 细微边框 - 机身线条 */
-  --color-border-accent: #444; /* 强调边框 - 镜头边缘 */
+  --color-dark-bg: #1a1a1a;
+  --color-surface-black: #0a0a0a;
+  --color-surface-primary: #242424; /* 主要表面 - 相机机身 */
+  --color-surface-secondary: #2d2d2d; /* 次要表面 - 镜头环 */
+  --color-surface-accent: #202020; /* 强调表面 - 取景器 */
+  --color-border-subtle: #3a3a3a; /* 细微边框 - 机身线条 */
+  --color-border-accent: #4a4a4a; /* 强调边框 - 镜头边缘 */
   --color-text-primary: #f5f5f5; /* 主要文字 - 清晰对比 */
   --color-text-secondary: #d0d0d0; /* 次要文字 - 柔和对比 */
   --color-text-muted: #999; /* 静音文字 - 参数显示 */
@@ -42,8 +42,8 @@
   --spacing-field: 8px; /* 字段间距 */
   --radius-card: 8px; /* 卡片圆角 */
   --radius-element: 4px; /* 元素圆角 */
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4); /* 卡片阴影 */
-  --shadow-element: 0 2px 6px rgba(0, 0, 0, 0.3); /* 元素阴影 */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.6); /* 卡片阴影 - 增强深度 */
+  --shadow-element: 0 2px 8px rgba(0, 0, 0, 0.5); /* 元素阴影 - 增强深度 */
 }
 
 @layer base {
@@ -60,14 +60,12 @@
     color: var(--color-text-primary);
     line-height: 1.5;
     padding: var(--spacing-container);
-    
+
     /* 简洁深度效果 - 环境光 */
-    background-image:
-      radial-gradient(
-        circle at 50% 50%,
-        rgba(51, 48, 36, 0.5),
-        var(--color-dark-bg) 100%
-      );
+    background-image: url("https://i.ibb.co/LXQTjZhF/smooth-white-plaster-wall.jpg");
+    background-blend-mode: overlay;
+    background-size: cover;
+    background-attachment: fixed;
   }
 }
 
