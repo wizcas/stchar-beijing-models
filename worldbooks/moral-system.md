@@ -1,7 +1,7 @@
 ---
 rule_name: 堕落度系统
 rule_key: 堕落值,堕落阶段,道德沦丧,角色转变,行为变化
-version: 1
+version: 2
 rule_type: 隐性规则
 rule_type_describe: 隐性规则，影响行为、对话、任务可用性和结局。
 ---
