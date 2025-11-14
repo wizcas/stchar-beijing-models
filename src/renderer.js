@@ -1,4 +1,8 @@
-// 渲染功能模块
+/**
+ * 渲染功能模块
+ * 负责 DOM 元素创建和页面内容渲染
+ */
+
 import { CSS_CLASSES, TAG_CLASSES, COLLAPSIBLE_CLASSES } from './css-constants.js';
 import { 
   addEmojiToFieldName, 
@@ -6,15 +10,27 @@ import {
   getFieldOrder, 
   getFieldOrderSet 
 } from './fields.js';
+import { SPECIAL_FIELDS, EQUIPMENT_KEYWORDS } from './modules/constants.js';
 
-// 处理字段名，移除所有$开始的前缀
+/**
+ * 处理字段名，移除所有 $ 开始的前缀
+ * @param {string} fieldName - 原始字段名
+ * @returns {string} 清理后的字段名
+ */
 function cleanFieldName(fieldName) {
   // 匹配所有以$开始的前缀，直到遇到空格，然后获取空格后的内容
   const match = fieldName.match(/^\$[^\s]*\s+(.+)$/);
   return match ? match[1] : fieldName;
 }
 
-// 通用DOM元素创建函数
+/**
+ * 通用 DOM 元素创建函数
+ * @param {string} tag - HTML 标签名称
+ * @param {string} [className] - CSS 类名
+ * @param {string} [textContent] - 文本内容
+ * @param {HTMLElement} [parent] - 父元素
+ * @returns {HTMLElement} 创建的 DOM 元素
+ */
 function createElement(tag, className, textContent, parent) {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -23,17 +39,36 @@ function createElement(tag, className, textContent, parent) {
   return element;
 }
 
-// 创建div元素的快捷函数
+/**
+ * 创建 div 元素的快捷函数
+ * @param {string} [className] - CSS 类名
+ * @param {string} [textContent] - 文本内容
+ * @param {HTMLElement} [parent] - 父元素
+ * @returns {HTMLElement} 创建的 div 元素
+ */
 function createDiv(className, textContent, parent) {
   return createElement("div", className, textContent, parent);
 }
 
-// 创建span元素的快捷函数
+/**
+ * 创建 span 元素的快捷函数
+ * @param {string} [className] - CSS 类名
+ * @param {string} [textContent] - 文本内容
+ * @param {HTMLElement} [parent] - 父元素
+ * @returns {HTMLElement} 创建的 span 元素
+ */
 function createSpan(className, textContent, parent) {
   return createElement("span", className, textContent, parent);
 }
 
-// 创建子部分容器和标题
+/**
+ * 创建子部分容器和标题
+ * @param {string} title - 标题文本
+ * @param {string} cardClass - 卡片 CSS 类名
+ * @param {string} titleClass - 标题 CSS 类名
+ * @param {boolean} [useEmoji=true] - 是否添加 emoji
+ * @returns {{container: HTMLElement, titleElement: HTMLElement, contentContainer: HTMLElement}} 包含容器结构的对象
+ */
 function createSubsectionContainer(title, cardClass, titleClass, useEmoji = true) {
   const container = createDiv(cardClass);
   const titleElement = createDiv(titleClass, useEmoji ? addEmojiToFieldName(title) : title, container);
@@ -42,7 +77,12 @@ function createSubsectionContainer(title, cardClass, titleClass, useEmoji = true
   return { container, titleElement, contentContainer };
 }
 
-// 创建标签容器
+/**
+ * 创建标签容器
+ * @param {string[]} items - 标签项目数组
+ * @param {HTMLElement} parent - 父元素
+ * @returns {HTMLElement} 标签容器元素
+ */
 function createTagContainer(items, parent) {
   const tagContainer = createDiv(TAG_CLASSES.CONTAINER, null, parent);
   items.forEach((item) => {
@@ -51,7 +91,13 @@ function createTagContainer(items, parent) {
   return tagContainer;
 }
 
-// 创建字段显示
+/**
+ * 创建字段显示元素
+ * @param {string} name - 字段名称
+ * @param {string|Array} value - 字段值
+ * @param {boolean} [isArray=false] - 是否为数组值
+ * @returns {HTMLElement} 字段元素
+ */
 function createField(name, value, isArray = false) {
   const fieldDiv = createDiv(CSS_CLASSES.FIELD_CONTAINER);
   const nameSpan = createSpan("field-label", addEmojiToFieldName(name) + ":", fieldDiv);
@@ -64,7 +110,7 @@ function createField(name, value, isArray = false) {
     const valueSpan = createSpan("field-value", null, fieldDiv);
     
     // 特殊处理想法字段
-    if (name === "想法") {
+    if (name === SPECIAL_FIELDS.THOUGHTS) {
       const em = createElement("em", null, value, valueSpan);
     } else {
       valueSpan.textContent = value;
@@ -74,7 +120,12 @@ function createField(name, value, isArray = false) {
   return fieldDiv;
 }
 
-// 创建子部分
+/**
+ * 创建子部分
+ * @param {string} title - 标题文本
+ * @param {Function} renderCallback - 渲染回调函数，接收 contentContainer 参数
+ * @returns {HTMLElement} 子部分容器元素
+ */
 function createSubsection(title, renderCallback) {
   const { container, contentContainer } = createSubsectionContainer(
     title, 
@@ -85,7 +136,11 @@ function createSubsection(title, renderCallback) {
   return container;
 }
 
-// 创建瀑布流布局管理器
+/**
+ * 创建瀑布流布局管理器
+ * @param {string} [containerClass] - 容器 CSS 类名
+ * @returns {{container: HTMLElement, addItem: Function, addItems: Function, relayout: Function, destroy: Function}} 瀑布流管理器对象
+ */
 function createMasonryGrid(containerClass = CSS_CLASSES.SUBSECTIONS_MASONRY) {
   const container = createDiv(containerClass);
   const minItemWidth = 350;
@@ -167,17 +222,30 @@ function createMasonryGrid(containerClass = CSS_CLASSES.SUBSECTIONS_MASONRY) {
   };
 }
 
-// 检查是否需要多列布局
+/**
+ * 检查是否需要多列布局
+ * @param {Object} subsections - 子部分对象
+ * @returns {boolean} 是否需要瀑布流布局
+ */
 function shouldUseMasonryLayout(subsections) {
   return Object.keys(subsections).length >= 3;
 }
 
-// 检查是否有滚动条
+/**
+ * 检查元素是否有滚动条
+ * @param {HTMLElement} [element] - 要检查的元素
+ * @returns {boolean} 是否有滚动条
+ */
 function hasScrollbar(element) {
   return element ? element.scrollHeight > element.clientHeight : false;
 }
 
-// 更新滚动遮罩状态
+/**
+ * 更新滚动遮罩状态
+ * @param {HTMLElement} container - 滚动容器
+ * @param {HTMLElement} content - 内容元素
+ * @returns {void}
+ */
 function updateScrollMask(container, content) {
   if (!container || !content) return;
   
@@ -188,7 +256,11 @@ function updateScrollMask(container, content) {
   }
 }
 
-// 创建女性角色卡片滚动容器
+/**
+ * 创建女性角色卡片滚动容器
+ * @param {HTMLElement} content - 内容元素
+ * @returns {HTMLElement} 滚动容器元素
+ */
 function createWomanCardScrollContainer(content) {
   const scrollContainer = createDiv(CSS_CLASSES.WOMAN_CARD_SCROLL_CONTAINER);
   const contentDiv = createDiv(CSS_CLASSES.WOMAN_CARD_CONTENT);
@@ -226,19 +298,25 @@ function createWomanCardScrollContainer(content) {
   return scrollContainer;
 }
 
-// 生成卡片标题
+/**
+ * 生成卡片标题
+ * 根据角色类型和数据生成合适的标题
+ * @param {string} sectionName - 分类名称
+ * @param {Object} sectionData - 分类数据
+ * @returns {string} 生成的标题
+ */
 function generateCardTitle(sectionName, sectionData) {
   // 使用角色类型检测
   const characterType = detectCharacterType(sectionName, sectionData);
 
   if (characterType === "woman" && sectionData) {
     // 查找昵称和全名
-    const nickname = sectionData["昵称"] || sectionData["nickname"];
+    const nickname = sectionData[SPECIAL_FIELDS.NICKNAME] || sectionData["nickname"];
     const fullName =
-      sectionData["真名"] ||
-      sectionData["全名"] ||
-      sectionData["姓名"] ||
-      sectionData["名字"];
+      sectionData[SPECIAL_FIELDS.REAL_NAME] ||
+      sectionData[SPECIAL_FIELDS.FULL_NAME] ||
+      sectionData[SPECIAL_FIELDS.SURNAME] ||
+      sectionData[SPECIAL_FIELDS.NAME];
 
     if (nickname && fullName) {
       return `${nickname} (${fullName})`;
@@ -252,44 +330,52 @@ function generateCardTitle(sectionName, sectionData) {
   return sectionName;
 }
 
-// 处理特殊字段合并和格式化
+/**
+ * 处理特殊字段合并和格式化
+ * @param {Object} obj - 原始数据对象
+ * @returns {Object} 处理后的数据对象
+ */
 function processSpecialFields(obj) {
   const processed = { ...obj };
 
   // 处理昵称和真名合并
-  if (processed["昵称"] && processed["真名"]) {
-    const nickname = processed["昵称"];
-    const realName = processed["真名"];
-    processed["名字"] = `${nickname} (${realName})`;
-    delete processed["昵称"];
-    delete processed["真名"];
+  if (processed[SPECIAL_FIELDS.NICKNAME] && processed[SPECIAL_FIELDS.REAL_NAME]) {
+    const nickname = processed[SPECIAL_FIELDS.NICKNAME];
+    const realName = processed[SPECIAL_FIELDS.REAL_NAME];
+    processed[SPECIAL_FIELDS.NAME] = `${nickname} (${realName})`;
+    delete processed[SPECIAL_FIELDS.NICKNAME];
+    delete processed[SPECIAL_FIELDS.REAL_NAME];
   }
 
   // 处理三围合并
-  if (processed["胸围"] && processed["腰围"] && processed["臀围"]) {
-    const bust = processed["胸围"];
-    const waist = processed["腰围"];
-    const hip = processed["臀围"];
-    processed["三围"] = `${bust}-${waist}-${hip} cm`;
-    delete processed["胸围"];
-    delete processed["腰围"];
-    delete processed["臀围"];
+  if (processed[SPECIAL_FIELDS.BUST] && processed[SPECIAL_FIELDS.WAIST] && processed[SPECIAL_FIELDS.HIP]) {
+    const bust = processed[SPECIAL_FIELDS.BUST];
+    const waist = processed[SPECIAL_FIELDS.WAIST];
+    const hip = processed[SPECIAL_FIELDS.HIP];
+    processed[SPECIAL_FIELDS.MEASUREMENTS] = `${bust}-${waist}-${hip} cm`;
+    delete processed[SPECIAL_FIELDS.BUST];
+    delete processed[SPECIAL_FIELDS.WAIST];
+    delete processed[SPECIAL_FIELDS.HIP];
   }
 
   // 处理身高单位
-  if (processed["身高"]) {
-    processed["身高"] = processed["身高"] + " cm";
+  if (processed[SPECIAL_FIELDS.HEIGHT]) {
+    processed[SPECIAL_FIELDS.HEIGHT] = processed[SPECIAL_FIELDS.HEIGHT] + " cm";
   }
 
   // 处理体重单位
-  if (processed["体重"]) {
-    processed["体重"] = processed["体重"] + " kg";
+  if (processed[SPECIAL_FIELDS.WEIGHT]) {
+    processed[SPECIAL_FIELDS.WEIGHT] = processed[SPECIAL_FIELDS.WEIGHT] + " kg";
   }
 
   return processed;
 }
 
-// 检查是否为器材对象格式
+/**
+ * 检查是否为器材对象格式
+ * @param {Object} obj - 要检查的对象
+ * @returns {boolean} 是否为器材对象
+ */
 function isEquipmentObject(obj) {
   // 检查对象的所有值是否都是数组（新格式：{categoryname: [items...]})
   const values = Object.values(obj);
@@ -300,18 +386,17 @@ function isEquipmentObject(obj) {
 
   // 包含器材相关的关键字
   const hasEquipmentKeywords = keys.some((key) =>
-    key.includes("机身") ||
-    key.includes("镜头") ||
-    key.includes("灯光") ||
-    key.includes("配件") ||
-    key.includes("其他") ||
-    key.includes("设备")
+    EQUIPMENT_KEYWORDS.some(keyword => key.includes(keyword))
   );
 
   return allValuesAreArrays && (hasEquipmentKeywords || keys.length >= 3);
 }
 
-// 更新父级可折叠容器的高度
+/**
+ * 更新父级可折叠容器的高度
+ * @param {HTMLElement} element - 起始元素
+ * @returns {void}
+ */
 function updateParentCollapsibleHeight(element) {
   let current = element;
   while (current && current.parentElement) {
@@ -323,7 +408,17 @@ function updateParentCollapsibleHeight(element) {
   }
 }
 
-// 创建可折叠卡片
+/**
+ * 创建可折叠卡片
+ * @param {string} title - 卡片标题
+ * @param {HTMLElement} content - 卡片内容元素
+ * @param {boolean} [initiallyCollapsed=true] - 是否初始折叠
+ * @param {Object} [customStyles={}] - 自定义样式配置
+ * @param {string} [customStyles.cardClass] - 卡片类名
+ * @param {string} [customStyles.titleClass] - 标题类名
+ * @param {boolean} [customStyles.useRawTitle] - 是否使用原始标题（不添加 emoji）
+ * @returns {HTMLElement} 可折叠卡片元素
+ */
 function createCollapsibleCard(
   title,
   content,
@@ -434,15 +529,21 @@ function createCollapsibleCard(
   return cardDiv;
 }
 
-// 渲染器材对象
+/**
+ * 渲染器材对象（具有分类的对象）
+ * @param {string} title - 器材类别标题
+ * @param {Object} obj - 器材对象，格式 {categoryname: [items...]}
+ * @param {HTMLElement} container - 目标容器元素
+ * @returns {void}
+ */
 function renderEquipmentObject(title, obj, container) {
   const equipmentGrid = document.createElement("div");
   equipmentGrid.className = CSS_CLASSES.EQUIPMENT_GRID;
 
   // 分离"其他"类别和前4类
   const entries = Object.entries(obj);
-  const otherEntries = entries.filter(([categoryName]) => categoryName === "其他");
-  const regularEntries = entries.filter(([categoryName]) => categoryName !== "其他");
+  const otherEntries = entries.filter(([categoryName]) => categoryName === EQUIPMENT_CATEGORIES.OTHER);
+  const regularEntries = entries.filter(([categoryName]) => categoryName !== EQUIPMENT_CATEGORIES.OTHER);
 
   // 渲染前4类（或所有非"其他"类别）
   regularEntries.forEach(([categoryName, items]) => {
@@ -462,7 +563,14 @@ function renderEquipmentObject(title, obj, container) {
   container.appendChild(collapsibleCard);
 }
 
-// 渲染字段（根据类型）
+/**
+ * 根据键值渲染字段
+ * @param {string} key - 字段键名
+ * @param {any} value - 字段值
+ * @param {HTMLElement} container - 目标容器元素
+ * @param {number} level - 嵌套层级
+ * @returns {void}
+ */
 function renderFieldByKey(key, value, container, level) {
   const cleanKey = cleanFieldName(key);
 
@@ -480,13 +588,25 @@ function renderFieldByKey(key, value, container, level) {
   }
 }
 
-// 渲染普通字段
+/**
+ * 渲染普通字段
+ * @param {string} name - 字段名称
+ * @param {any} value - 字段值
+ * @param {HTMLElement} container - 目标容器元素
+ * @returns {void}
+ */
 function renderField(name, value, container) {
   const fieldDiv = createField(name, value, Array.isArray(value));
   container.appendChild(fieldDiv);
 }
 
-// 渲染数组
+/**
+ * 渲染数组字段
+ * @param {string} title - 数组标题
+ * @param {Array} arr - 数组数据
+ * @param {HTMLElement} container - 目标容器元素
+ * @returns {void}
+ */
 function renderArray(title, arr, container) {
   // 检查是否为简单字符串数组
   const isSimpleArray = arr.every((item) => typeof item === "string");
@@ -513,7 +633,14 @@ function renderArray(title, arr, container) {
   }
 }
 
-// 渲染子部分
+/**
+ * 渲染子部分
+ * @param {string} title - 子部分标题
+ * @param {Object} obj - 子部分数据对象
+ * @param {HTMLElement} container - 目标容器元素
+ * @param {number} level - 嵌套层级
+ * @returns {void}
+ */
 function renderSubsection(title, obj, container, level) {
   const subsectionDiv = createSubsection(title, (contentContainer) => {
     renderObject(obj, contentContainer, title, level + 1);
@@ -521,7 +648,16 @@ function renderSubsection(title, obj, container, level) {
   container.appendChild(subsectionDiv);
 }
 
-// 渲染角色卡片（特殊布局）
+/**
+ * 渲染角色卡片（特殊布局）
+ * 分离直接字段和子部分，根据需要使用网格或瀑布流布局
+ * @param {Object} obj - 角色数据对象
+ * @param {HTMLElement} container - 目标容器元素
+ * @param {string} sectionName - 分类名称
+ * @param {string[]} order - 字段顺序数组
+ * @param {Set} orderSet - 字段顺序 Set（用于快速查找）
+ * @returns {void}
+ */
 function renderCharacterCard(obj, container, sectionName, order, orderSet) {
   // 分离直接字段和子部分
   const directFields = {};
@@ -588,12 +724,20 @@ function renderCharacterCard(obj, container, sectionName, order, orderSet) {
   }
 }
 
-// 主要的渲染对象函数
+/**
+ * 主要的渲染对象函数
+ * 根据嵌套层级和角色类型智能渲染数据
+ * @param {Object} obj - 要渲染的数据对象
+ * @param {HTMLElement} container - 目标容器元素
+ * @param {string} sectionName - 分类名称
+ * @param {number} [level=0] - 嵌套层级
+ * @returns {void}
+ */
 function renderObject(obj, container, sectionName, level = 0) {
   // 处理特殊字段合并
   const processedObj = processSpecialFields(obj);
 
-  // 获取该部分的字段顺序和Set
+  // 获取该部分的字段顺序和 Set
   const order = getFieldOrder(sectionName, obj);
   const orderSet = getFieldOrderSet(sectionName, obj);
 
@@ -614,7 +758,7 @@ function renderObject(obj, container, sectionName, level = 0) {
         }
       }
 
-      // 渲染未在顺序中定义的字段（使用Set进行O(1)查找）
+      // 渲染未在顺序中定义的字段（使用 Set 进行 O(1) 查找）
       for (const [key, value] of Object.entries(processedObj)) {
         if (!orderSet.has(key)) {
           renderFieldByKey(key, value, container, level);
