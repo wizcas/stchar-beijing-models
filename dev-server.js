@@ -7,9 +7,9 @@ if (!fs.existsSync("debug")) {
   fs.mkdirSync("debug", { recursive: true });
 }
 
-// 创建 char-var.json 的软链接到 debug 目录
-const sourceFile = path.resolve("char-var.json");
-const targetFile = "debug/char-var.json";
+// 创建 status-vars.debug.json 的软链接到 debug 目录
+const sourceFile = path.resolve("data/status-vars.debug.json");
+const targetFile = "debug/status-vars.debug.json";
 
 try {
   // 如果已存在，删除旧的链接

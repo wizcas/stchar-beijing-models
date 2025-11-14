@@ -5,7 +5,9 @@
     "build": "node build.js",
     "build:prod": "node build.js --prod",
     "build:prod:debug": "node build.js --prod --no-minify",
-    "dev": "node dev-server.js"
+    "dev": "node dev-server.js",
+    "config:build": "node build-config.js",
+    "config:verify": "node verify-config.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
@@ -16,6 +18,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.17",
+    "js-yaml": "^4.1.1",
     "postcss": "^8.5.6"
   }
 }

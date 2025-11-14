@@ -66,11 +66,11 @@ export const EQUIPMENT_CATEGORIES = {
  * @property {string} WOMAN_SECTION_KEY - 女性角色数据的 key
  */
 export const DATA_LOADING = {
-  LOADING_TEXT: "正在加载状态数据...",
-  ERROR_PREFIX: "加载失败: ",
-  TEST_DATA_FILE: "char-var.json",
-  STATUS_BAR_KEY: "状态栏",
-  WOMAN_SECTION_KEY: "女人",
+   LOADING_TEXT: "正在加载状态数据...",
+   ERROR_PREFIX: "加载失败: ",
+   TEST_DATA_FILE: "status-vars.debug.json",
+   STATUS_BAR_KEY: "状态栏",
+   WOMAN_SECTION_KEY: "女人",
 };
 
 /**

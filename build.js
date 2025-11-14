@@ -296,11 +296,11 @@ const htmlInlinePlugin = {
             "",
           );
 
-          // 3. 移除测试数据相关的注释块
-          sourceContent = sourceContent.replace(
-            /\/\/ Production: 使用 loadStatusData\(\) 从API获取数据[\s\S]*?\/\/ Development: 使用 loadTestData\(\) 从char-var\.json获取测试数据[\s\S]*?\/\/ const statusData = await loadStatusData\(\);/g,
-            "// Production: 使用 loadStatusData() 从API获取数据",
-          );
+           // 3. 移除测试数据相关的注释块
+           sourceContent = sourceContent.replace(
+             /\/\/ Production: 使用 loadStatusData\(\) 从API获取数据[\s\S]*?\/\/ Development: 使用 loadTestData\(\) 从status-vars\.debug\.json获取测试数据[\s\S]*?\/\/ const statusData = await loadStatusData\(\);/g,
+             "// Production: 使用 loadStatusData() 从API获取数据",
+           );
 
           // 4. 添加 loadStatusData 函数（如果不存在）
           if (!sourceContent.includes("async function loadStatusData")) {

@@ -1,0 +1,128 @@
+# 状态字段 Schema 定义
+# 该文件定义所有支持的字段及其类型约束
+# 生成时会与 status.json 合并，产生完整的初始化数据
+
+"{{user}}":
+  description: "玩家角色"
+  fields:
+    行业等级:
+      type: "$enum={专业;资深;名家}"
+      default: "专业"
+    堕落度:
+      type: "$range=[0,100]"
+      default: 0
+    穿搭:
+      type: "string"
+      default: "黑色短袖T恤配牛仔裤。"
+    想法:
+      type: "string"
+      default: "终于要开张了，哥们儿我以后就是独立艺术家了！希望这'六花'不是个奇怪的人……我可不想第一单就翻车。"
+    资金:
+      type: "number"
+      default: 10000
+    拍摄任务:
+      type: "$list"
+      default: []
+    器材:
+      type: "object"
+      fields:
+        机身:
+          type: "$list"
+          default: []
+        镜头:
+          type: "$list"
+          default: []
+        灯光:
+          type: "$list"
+          default: []
+        配件:
+          type: "$list"
+          default: []
+        其他:
+          type: "$list"
+          default: []
+
+女人:
+  description: "女性角色"
+  fields:
+    六花:
+      type: "object"
+      fields:
+        昵称:
+          type: "$ro"
+          default: "六花"
+        真名:
+          type: "$ro"
+          default: "林六花"
+        想法:
+          type: "string"
+          default: "第一次找专业摄影师拍照呢，好紧张……{{user}}哥哥会是个什么样的人呢？"
+        关系:
+          type: "object"
+          fields:
+            堕落度:
+              type: "$range=[0,100]"
+              default: 0
+            好感度:
+              type: "$range=[-100,100]"
+              default: 0
+        外型:
+          type: "object"
+          fields:
+            五官:
+              type: "string"
+              default: ""
+            发型:
+              type: "string"
+              default: ""
+            穿搭:
+              type: "string"
+              default: ""
+            身高:
+              type: "$range=[100,250]"
+              default: 160
+            体重:
+              type: "$range=[30,150]"
+              default: 50
+            胸围:
+              type: "$range=[60,120]"
+              default: 80
+            腰围:
+              type: "$range=[40,120]"
+              default: 60
+            臀围:
+              type: "$range=[60,120]"
+              default: 85
+            罩杯:
+              type: "string"
+              default: ""
+        职业:
+          type: "object"
+          fields:
+            类型:
+              type: "$list"
+              default: []
+            层级:
+              type: "$enum={新手;进阶;专业}"
+              default: "新手"
+            方向:
+              type: "$enum={专业;多元;退出;卖身}"
+              default: "专业"
+            尺度:
+              type: "$enum={清纯;性感;大尺度;私密}"
+              default: "清纯"
+            人设:
+              type: "$list"
+              default: []
+        性爱:
+          type: "object"
+          fields:
+            性癖:
+              type: "$list"
+              default: []
+            性经验次数:
+              type: "$range=[0,10000]"
+              default: 0
+            动情程度:
+              type: "$range=[0,100]"
+              default: 0
