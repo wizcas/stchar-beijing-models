@@ -10,7 +10,7 @@ import {
   getFieldOrder, 
   getFieldOrderSet 
 } from './fields.js';
-import { SPECIAL_FIELDS, EQUIPMENT_KEYWORDS } from './modules/constants.js';
+import { SPECIAL_FIELDS, EQUIPMENT_KEYWORDS, EQUIPMENT_CATEGORIES } from './modules/constants.js';
 
 /**
  * 处理字段名，移除所有 $ 开始的前缀
