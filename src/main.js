@@ -52,7 +52,7 @@ function renderCharacterSection(sectionName, sectionData, container) {
 
   // 根据角色类型决定是否使用滚动容器
   let finalContent;
-  if (characterType === CHARACTER_TYPES.WOMAN) {
+  if (characterType === CHARACTER_TYPES.WOMAN || characterType === CHARACTER_TYPES.USER) {
     finalContent = createWomanCardScrollContainer(contentContainer);
   } else {
     finalContent = contentContainer;

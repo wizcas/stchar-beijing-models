@@ -3,14 +3,22 @@
  * 负责 DOM 元素创建和页面内容渲染
  */
 
-import { CSS_CLASSES, TAG_CLASSES, COLLAPSIBLE_CLASSES } from './css-constants.js';
-import { 
-  addEmojiToFieldName, 
-  detectCharacterType, 
-  getFieldOrder, 
-  getFieldOrderSet 
-} from './fields.js';
-import { SPECIAL_FIELDS, EQUIPMENT_KEYWORDS, EQUIPMENT_CATEGORIES } from './modules/constants.js';
+import {
+  CSS_CLASSES,
+  TAG_CLASSES,
+  COLLAPSIBLE_CLASSES,
+} from "./css-constants.js";
+import {
+  addEmojiToFieldName,
+  detectCharacterType,
+  getFieldOrder,
+  getFieldOrderSet,
+} from "./fields.js";
+import {
+  SPECIAL_FIELDS,
+  EQUIPMENT_KEYWORDS,
+  EQUIPMENT_CATEGORIES,
+} from "./modules/constants.js";
 
 /**
  * 处理字段名，移除所有 $ 开始的前缀
@@ -69,11 +77,24 @@ function createSpan(className, textContent, parent) {
  * @param {boolean} [useEmoji=true] - 是否添加 emoji
  * @returns {{container: HTMLElement, titleElement: HTMLElement, contentContainer: HTMLElement}} 包含容器结构的对象
  */
-function createSubsectionContainer(title, cardClass, titleClass, useEmoji = true) {
+function createSubsectionContainer(
+  title,
+  cardClass,
+  titleClass,
+  useEmoji = true,
+) {
   const container = createDiv(cardClass);
-  const titleElement = createDiv(titleClass, useEmoji ? addEmojiToFieldName(title) : title, container);
-  const contentContainer = createDiv(CSS_CLASSES.CONTENT_CONTAINER, null, container);
-  
+  const titleElement = createDiv(
+    titleClass,
+    useEmoji ? addEmojiToFieldName(title) : title,
+    container,
+  );
+  const contentContainer = createDiv(
+    CSS_CLASSES.CONTENT_CONTAINER,
+    null,
+    container,
+  );
+
   return { container, titleElement, contentContainer };
 }
 
@@ -100,7 +121,11 @@ function createTagContainer(items, parent) {
  */
 function createField(name, value, isArray = false) {
   const fieldDiv = createDiv(CSS_CLASSES.FIELD_CONTAINER);
-  const nameSpan = createSpan("field-label", addEmojiToFieldName(name) + ":", fieldDiv);
+  const nameSpan = createSpan(
+    "field-label",
+    addEmojiToFieldName(name) + ":",
+    fieldDiv,
+  );
 
   if (isArray) {
     const valueDiv = createDiv("field-value");
@@ -108,7 +133,7 @@ function createField(name, value, isArray = false) {
     fieldDiv.appendChild(valueDiv);
   } else {
     const valueSpan = createSpan("field-value", null, fieldDiv);
-    
+
     // 特殊处理想法字段
     if (name === SPECIAL_FIELDS.THOUGHTS) {
       const em = createElement("em", null, value, valueSpan);
@@ -128,9 +153,9 @@ function createField(name, value, isArray = false) {
  */
 function createSubsection(title, renderCallback) {
   const { container, contentContainer } = createSubsectionContainer(
-    title, 
-    CSS_CLASSES.SUBSECTION_CARD, 
-    CSS_CLASSES.SECTION_TITLE
+    title,
+    CSS_CLASSES.SUBSECTION_CARD,
+    CSS_CLASSES.SECTION_TITLE,
   );
   renderCallback(contentContainer);
   return container;
@@ -151,19 +176,19 @@ function createMasonryGrid(containerClass = CSS_CLASSES.SUBSECTIONS_MASONRY) {
     const containerWidth = container.offsetWidth;
     const calculatedColumns = Math.floor(containerWidth / minItemWidth) || 1;
     const columns = Math.min(calculatedColumns, maxColumns);
-    
+
     container.style.columnCount = columns.toString();
     container.style.columnGap = `${gap}px`;
     container.style.display = "block";
     container.style.gridTemplateColumns = "";
     container.style.gridTemplateRows = "";
-    
+
     Array.from(container.children).forEach((child) => {
       child.style.gridRowStart = "";
       child.style.gridColumnStart = "";
       child.style.breakInside = "avoid";
       child.style.marginBottom = `${gap}px`;
-      
+
       if (!child.classList.contains("masonry-item")) {
         child.classList.add("masonry-item");
       }
@@ -248,7 +273,7 @@ function hasScrollbar(element) {
  */
 function updateScrollMask(container, content) {
   if (!container || !content) return;
-  
+
   if (hasScrollbar(content)) {
     container.classList.add("has-overflow");
   } else {
@@ -279,7 +304,11 @@ function createWomanCardScrollContainer(content) {
       updateScrollMask(scrollContainer, contentDiv);
     }, 50);
   });
-  observer.observe(contentDiv, { childList: true, subtree: true, attributes: true });
+  observer.observe(contentDiv, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+  });
 
   // 监听窗口大小变化
   const handleResize = () => {
@@ -311,7 +340,8 @@ function generateCardTitle(sectionName, sectionData) {
 
   if (characterType === "woman" && sectionData) {
     // 查找昵称和全名
-    const nickname = sectionData[SPECIAL_FIELDS.NICKNAME] || sectionData["nickname"];
+    const nickname =
+      sectionData[SPECIAL_FIELDS.NICKNAME] || sectionData["nickname"];
     const fullName =
       sectionData[SPECIAL_FIELDS.REAL_NAME] ||
       sectionData[SPECIAL_FIELDS.FULL_NAME] ||
@@ -339,7 +369,10 @@ function processSpecialFields(obj) {
   const processed = { ...obj };
 
   // 处理昵称和真名合并
-  if (processed[SPECIAL_FIELDS.NICKNAME] && processed[SPECIAL_FIELDS.REAL_NAME]) {
+  if (
+    processed[SPECIAL_FIELDS.NICKNAME] &&
+    processed[SPECIAL_FIELDS.REAL_NAME]
+  ) {
     const nickname = processed[SPECIAL_FIELDS.NICKNAME];
     const realName = processed[SPECIAL_FIELDS.REAL_NAME];
     processed[SPECIAL_FIELDS.NAME] = `${nickname} (${realName})`;
@@ -348,7 +381,11 @@ function processSpecialFields(obj) {
   }
 
   // 处理三围合并
-  if (processed[SPECIAL_FIELDS.BUST] && processed[SPECIAL_FIELDS.WAIST] && processed[SPECIAL_FIELDS.HIP]) {
+  if (
+    processed[SPECIAL_FIELDS.BUST] &&
+    processed[SPECIAL_FIELDS.WAIST] &&
+    processed[SPECIAL_FIELDS.HIP]
+  ) {
     const bust = processed[SPECIAL_FIELDS.BUST];
     const waist = processed[SPECIAL_FIELDS.WAIST];
     const hip = processed[SPECIAL_FIELDS.HIP];
@@ -382,11 +419,12 @@ function isEquipmentObject(obj) {
   const keys = Object.keys(obj);
 
   // 所有值都是数组
-  const allValuesAreArrays = values.length > 0 && values.every((value) => Array.isArray(value));
+  const allValuesAreArrays =
+    values.length > 0 && values.every((value) => Array.isArray(value));
 
   // 包含器材相关的关键字
   const hasEquipmentKeywords = keys.some((key) =>
-    EQUIPMENT_KEYWORDS.some(keyword => key.includes(keyword))
+    EQUIPMENT_KEYWORDS.some((keyword) => key.includes(keyword)),
   );
 
   return allValuesAreArrays && (hasEquipmentKeywords || keys.length >= 3);
@@ -401,8 +439,12 @@ function updateParentCollapsibleHeight(element) {
   let current = element;
   while (current && current.parentElement) {
     current = current.parentElement;
-    if (current.classList && current.classList.contains("collapsible-content") &&
-        current.style.maxHeight && current.style.maxHeight !== "0px") {
+    if (
+      current.classList &&
+      current.classList.contains("collapsible-content") &&
+      current.style.maxHeight &&
+      current.style.maxHeight !== "0px"
+    ) {
       current.style.maxHeight = current.scrollHeight + "px";
     }
   }
@@ -423,7 +465,7 @@ function createCollapsibleCard(
   title,
   content,
   initiallyCollapsed = true,
-  customStyles = {}
+  customStyles = {},
 ) {
   // 创建卡片容器 - 使用 grid 让内容自动调整高度
   const cardDiv = document.createElement("div");
@@ -441,7 +483,9 @@ function createCollapsibleCard(
   // 创建标题文本
   const titleDiv = document.createElement("div");
   titleDiv.className = customStyles.titleClass || CSS_CLASSES.SECTION_TITLE;
-  titleDiv.textContent = customStyles.useRawTitle ? title : addEmojiToFieldName(title);
+  titleDiv.textContent = customStyles.useRawTitle
+    ? title
+    : addEmojiToFieldName(title);
 
   // 创建折叠图标
   const collapseIcon = document.createElement("div");
@@ -458,7 +502,7 @@ function createCollapsibleCard(
   contentContainer.style.display = "grid";
   contentContainer.style.gridTemplateRows = initiallyCollapsed ? "0fr" : "1fr";
   contentContainer.style.overflow = "hidden";
-  
+
   // 包装内容以支持 grid 0fr/1fr 收缩
   const contentWrapper = document.createElement("div");
   contentWrapper.style.minHeight = "0";
@@ -497,7 +541,9 @@ function createCollapsibleCard(
     updateVisibility();
 
     // 检查是否有女性角色卡片滚动容器，更新其遮罩状态
-    const scrollContainer = contentContainer.querySelector(".woman-card-scroll-container");
+    const scrollContainer = contentContainer.querySelector(
+      ".woman-card-scroll-container",
+    );
     const scrollContent = scrollContainer?.querySelector(".woman-card-content");
     if (scrollContainer && scrollContent) {
       setTimeout(() => {
@@ -542,25 +588,92 @@ function renderEquipmentObject(title, obj, container) {
 
   // 分离"其他"类别和前4类
   const entries = Object.entries(obj);
-  const otherEntries = entries.filter(([categoryName]) => categoryName === EQUIPMENT_CATEGORIES.OTHER);
-  const regularEntries = entries.filter(([categoryName]) => categoryName !== EQUIPMENT_CATEGORIES.OTHER);
+  const otherEntries = entries.filter(
+    ([categoryName]) => categoryName === EQUIPMENT_CATEGORIES.OTHER,
+  );
+  const regularEntries = entries.filter(
+    ([categoryName]) => categoryName !== EQUIPMENT_CATEGORIES.OTHER,
+  );
 
   // 渲染前4类（或所有非"其他"类别）
   regularEntries.forEach(([categoryName, items]) => {
     const itemDiv = createDiv(CSS_CLASSES.EQUIPMENT_ITEM, null, equipmentGrid);
-    createDiv(CSS_CLASSES.CATEGORY_TITLE, addEmojiToFieldName(categoryName), itemDiv);
+    createDiv(
+      CSS_CLASSES.CATEGORY_TITLE,
+      addEmojiToFieldName(categoryName),
+      itemDiv,
+    );
     createTagContainer(items, itemDiv);
   });
 
   // 渲染"其他"类别（如果存在），占据全宽
   otherEntries.forEach(([categoryName, items]) => {
-    const itemDiv = createDiv(CSS_CLASSES.EQUIPMENT_ITEM_FULL, null, equipmentGrid);
-    createDiv(CSS_CLASSES.CATEGORY_TITLE, addEmojiToFieldName(categoryName), itemDiv);
+    const itemDiv = createDiv(
+      CSS_CLASSES.EQUIPMENT_ITEM_FULL,
+      null,
+      equipmentGrid,
+    );
+    createDiv(
+      CSS_CLASSES.CATEGORY_TITLE,
+      addEmojiToFieldName(categoryName),
+      itemDiv,
+    );
     createTagContainer(items, itemDiv);
   });
 
   const collapsibleCard = createCollapsibleCard(title, equipmentGrid, true);
   container.appendChild(collapsibleCard);
+}
+
+/**
+ * 性爱部分可见性配置
+ * 可以根据需要修改这些条件
+ */
+const INTIMACY_VISIBILITY_CONFIG = {
+  // 好感度阈值
+  favorabilityThreshold: 30,
+  moralityThreshold: 40,
+  // 动情程度阈值
+  arousalThreshold: 20,
+  // 占位符文本
+  placeholderText: "🙈 {{user}}尚未了解相关信息",
+};
+
+/**
+ * 检查性爱部分是否应该可见
+ * @param {Object} characterData - 角色完整数据对象
+ * @returns {boolean} 是否应该显示性爱部分
+ */
+function shouldShowIntimacySection(characterData) {
+  // 获取关系数据
+  const relationData = characterData?.关系;
+  if (!relationData) return false;
+
+  // 获取性爱数据中的动情程度
+  const intimacyData = characterData?.性爱;
+  const arousal = intimacyData?.动情程度 || 0;
+
+  // 获取好感度
+  const favorability = relationData?.好感度 || 0;
+  // 获取堕落度
+  const morality = relationData?.堕落度 || 0;
+
+  // 检查是否满足可见性条件
+  return (
+    favorability >= INTIMACY_VISIBILITY_CONFIG.favorabilityThreshold ||
+    arousal >= INTIMACY_VISIBILITY_CONFIG.arousalThreshold ||
+    morality >= INTIMACY_VISIBILITY_CONFIG.moralityThreshold
+  );
+}
+
+/**
+ * 创建性爱部分占位符元素
+ * @returns {HTMLElement} 占位符元素
+ */
+function createIntimacyPlaceholder() {
+  const placeholder = createDiv("text-center py-8 text-text-muted");
+  placeholder.textContent = INTIMACY_VISIBILITY_CONFIG.placeholderText;
+  return placeholder;
 }
 
 /**
@@ -593,9 +706,18 @@ function shouldHideField(key, sectionName) {
  * @param {number} level - 嵌套层级
  * @param {string} sectionName - 当前所在的部分名称
  * @param {Object} parentObj - 父对象，用于查找描述字段
+ * @param {Object} rootCharacterData - 根角色数据，用于条件可见性检查
  * @returns {void}
  */
-function renderFieldByKey(key, value, container, level, sectionName = "", parentObj = null) {
+function renderFieldByKey(
+  key,
+  value,
+  container,
+  level,
+  sectionName = "",
+  parentObj = null,
+  rootCharacterData = null,
+) {
   const cleanKey = cleanFieldName(key);
 
   // 检查是否应该隐藏该字段
@@ -610,7 +732,7 @@ function renderFieldByKey(key, value, container, level, sectionName = "", parent
       // 特殊处理器材对象格式 {categoryname: [items...], categoryname2: [items...], ...}
       renderEquipmentObject(cleanKey, value, container);
     } else {
-      renderSubsection(cleanKey, value, container, level);
+      renderSubsection(cleanKey, value, container, level, rootCharacterData);
     }
   } else {
     renderField(cleanKey, value, container, parentObj);
@@ -623,7 +745,7 @@ function renderFieldByKey(key, value, container, level, sectionName = "", parent
  * @returns {string} 格式化后的字符串
  */
 function formatNumberWithCommas(num) {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 /**
@@ -672,7 +794,11 @@ function renderArray(title, arr, container) {
     // 复杂数组，保持原有渲染方式
     const subsectionDiv = createSubsection(title, (contentContainer) => {
       arr.forEach((item) => {
-        const itemDiv = createDiv(CSS_CLASSES.ARRAY_ITEM, null, contentContainer);
+        const itemDiv = createDiv(
+          CSS_CLASSES.ARRAY_ITEM,
+          null,
+          contentContainer,
+        );
 
         if (typeof item === "object" && item.category && item.items) {
           createDiv(CSS_CLASSES.CATEGORY_TITLE, item.category, itemDiv);
@@ -692,13 +818,36 @@ function renderArray(title, arr, container) {
  * @param {Object} obj - 子部分数据对象
  * @param {HTMLElement} container - 目标容器元素
  * @param {number} level - 嵌套层级
+ * @param {Object} rootCharacterData - 根角色数据，用于条件可见性检查
  * @returns {void}
  */
-function renderSubsection(title, obj, container, level) {
-  const subsectionDiv = createSubsection(title, (contentContainer) => {
-    renderObject(obj, contentContainer, title, level + 1);
-  });
-  container.appendChild(subsectionDiv);
+function renderSubsection(
+  title,
+  obj,
+  container,
+  level,
+  rootCharacterData = null,
+) {
+  // 特殊处理性爱部分的条件可见性
+  if (title === "性爱" && rootCharacterData) {
+    const shouldShow = shouldShowIntimacySection(rootCharacterData);
+
+    const subsectionDiv = createSubsection(title, (contentContainer) => {
+      if (shouldShow) {
+        renderObject(obj, contentContainer, title, level + 1);
+      } else {
+        const placeholder = createIntimacyPlaceholder();
+        contentContainer.appendChild(placeholder);
+      }
+    });
+    container.appendChild(subsectionDiv);
+  } else {
+    // 普通子部分渲染
+    const subsectionDiv = createSubsection(title, (contentContainer) => {
+      renderObject(obj, contentContainer, title, level + 1);
+    });
+    container.appendChild(subsectionDiv);
+  }
 }
 
 /**
@@ -721,7 +870,11 @@ function renderCharacterCard(obj, container, sectionName, order, orderSet) {
   for (const fieldKey of fieldsToProcess) {
     if (obj.hasOwnProperty(fieldKey)) {
       const value = obj[fieldKey];
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
         subsections[fieldKey] = value;
       } else {
         directFields[fieldKey] = value;
@@ -761,10 +914,32 @@ function renderCharacterCard(obj, container, sectionName, order, orderSet) {
           addItemFunction(equipmentCard);
         }
       } else {
-        const subsectionCard = createSubsection(cleanKey, (contentContainer) => {
-          renderObject(value, contentContainer, cleanKey, 1);
-        });
-        addItemFunction(subsectionCard);
+        // 特殊处理性爱部分的条件可见性
+        if (cleanKey === "性爱") {
+          const shouldShow = shouldShowIntimacySection(obj);
+
+          const subsectionCard = createSubsection(
+            cleanKey,
+            (contentContainer) => {
+              if (shouldShow) {
+                renderObject(value, contentContainer, cleanKey, 1);
+              } else {
+                const placeholder = createIntimacyPlaceholder();
+                contentContainer.appendChild(placeholder);
+              }
+            },
+          );
+          addItemFunction(subsectionCard);
+        } else {
+          // 普通子部分渲染
+          const subsectionCard = createSubsection(
+            cleanKey,
+            (contentContainer) => {
+              renderObject(value, contentContainer, cleanKey, 1);
+            },
+          );
+          addItemFunction(subsectionCard);
+        }
       }
     }
 
@@ -784,9 +959,16 @@ function renderCharacterCard(obj, container, sectionName, order, orderSet) {
  * @param {HTMLElement} container - 目标容器元素
  * @param {string} sectionName - 分类名称
  * @param {number} [level=0] - 嵌套层级
+ * @param {Object} [rootCharacterData=null] - 根角色数据，用于条件可见性检查
  * @returns {void}
  */
-function renderObject(obj, container, sectionName, level = 0) {
+function renderObject(
+  obj,
+  container,
+  sectionName,
+  level = 0,
+  rootCharacterData = null,
+) {
   // 处理特殊字段合并
   const processedObj = processSpecialFields(obj);
 
@@ -799,6 +981,9 @@ function renderObject(obj, container, sectionName, level = 0) {
   const isCharacterCard =
     level === 0 && (characterType === "user" || characterType === "woman");
 
+  // 如果是顶级角色卡片，将当前对象作为rootCharacterData
+  const currentRootData = isCharacterCard ? processedObj : rootCharacterData;
+
   if (isCharacterCard) {
     renderCharacterCard(processedObj, container, sectionName, order, orderSet);
   } else {
@@ -807,20 +992,44 @@ function renderObject(obj, container, sectionName, level = 0) {
       // 按预定义顺序渲染字段
       for (const fieldKey of order) {
         if (processedObj.hasOwnProperty(fieldKey)) {
-          renderFieldByKey(fieldKey, processedObj[fieldKey], container, level, sectionName, processedObj);
+          renderFieldByKey(
+            fieldKey,
+            processedObj[fieldKey],
+            container,
+            level,
+            sectionName,
+            processedObj,
+            currentRootData,
+          );
         }
       }
 
       // 渲染未在顺序中定义的字段（使用 Set 进行 O(1) 查找）
       for (const [key, value] of Object.entries(processedObj)) {
         if (!orderSet.has(key)) {
-          renderFieldByKey(key, value, container, level, sectionName, processedObj);
+          renderFieldByKey(
+            key,
+            value,
+            container,
+            level,
+            sectionName,
+            processedObj,
+            currentRootData,
+          );
         }
       }
     } else {
       // 如果没有预定义顺序，按原始顺序渲染
       for (const [key, value] of Object.entries(processedObj)) {
-        renderFieldByKey(key, value, container, level, sectionName, processedObj);
+        renderFieldByKey(
+          key,
+          value,
+          container,
+          level,
+          sectionName,
+          processedObj,
+          currentRootData,
+        );
       }
     }
   }
@@ -848,6 +1057,8 @@ export {
   createCollapsibleCard,
   renderEquipmentObject,
   shouldHideField,
+  shouldShowIntimacySection,
+  createIntimacyPlaceholder,
   formatNumberWithCommas,
   renderFieldByKey,
   renderField,
@@ -855,4 +1066,5 @@ export {
   renderSubsection,
   renderCharacterCard,
   renderObject,
+  INTIMACY_VISIBILITY_CONFIG,
 };
