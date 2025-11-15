@@ -5,14 +5,15 @@
  * 
  * 流程:
  * 1. 读取 data/status.yaml (schema 定义)
- * 2. 读取 data/status.json (运行时覆盖值)
- * 3. 合并: schema defaults + status.json 覆盖
+ * 2. 从 schema 生成完整的 data/status.json (包含所有字段的默认值或覆盖值)
+ * 3. 合并: schema defaults + 已有的 status.json 覆盖值
  * 4. 生成 data/status-vars.debug.json (完整的运行时数据)
  * 
- * 约束:
- * - 不修改 status.yaml (schema 源文件)
- * - 不修改 status.json (运行时数据源文件)
- * - 只生成 status-vars.debug.json
+ * 目标:
+ * - status.json 始终包含 status.yaml 中定义的所有字段
+ * - 用默认值初始化新字段
+ * - 保留已有的自定义覆盖值
+ * - 用于酒馆角色卡的初始化数据
  */
 
 const fs = require('fs');
@@ -51,6 +52,72 @@ function extractFieldDefinitions(obj) {
 }
 
 /**
+ * 从 schema 构建完整的初始化结构（包含所有字段）
+ * 保留类型前缀用于 status.json
+ */
+function buildInitialStructure(fields, existingData = {}) {
+  const result = {};
+
+  for (const [fieldName, fieldConfig] of Object.entries(fields)) {
+    const cleanFieldName = extractFieldName(fieldName);
+    
+    // 检查是否有现有的覆盖值
+    let existingValue = null;
+    let foundExisting = false;
+    
+    for (const [existingKey, existingVal] of Object.entries(existingData)) {
+      if (extractFieldName(existingKey) === cleanFieldName) {
+        existingValue = existingVal;
+        foundExisting = true;
+        break;
+      }
+    }
+
+    if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.fields) {
+      // 嵌套对象：递归处理
+      result[fieldName] = buildInitialStructure(
+        fieldConfig.fields,
+        foundExisting ? existingValue : {}
+      );
+    } else if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.type) {
+      // 有定义的字段：使用现有值或默认值
+      if (foundExisting) {
+        result[fieldName] = existingValue;
+      } else {
+        // 使用默认值，如果没有则使用类型的合理默认值
+        if (fieldConfig.default !== undefined) {
+          result[fieldName] = fieldConfig.default;
+        } else {
+          // 根据类型推断默认值
+          if (fieldConfig.type === '$list') {
+            result[fieldName] = [];
+          } else if (fieldConfig.type.startsWith('$range')) {
+            result[fieldName] = 0;
+          } else if (fieldConfig.type.startsWith('$enum')) {
+            // 枚举类型：使用第一个值作为默认
+            const enumMatch = fieldConfig.type.match(/\$enum=\{([^}]+)\}/);
+            if (enumMatch) {
+              const firstValue = enumMatch[1].split(';')[0];
+              result[fieldName] = firstValue;
+            } else {
+              result[fieldName] = null;
+            }
+          } else if (fieldConfig.type === '$ro') {
+            // 只读字段：使用默认值或 null
+            result[fieldName] = fieldConfig.default || null;
+          } else {
+            // 默认为字符串或 null
+            result[fieldName] = fieldConfig.default || null;
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * 递归合并: schema defaults + overrides
  * overrides 中的值会覆盖 defaults
  */
@@ -80,29 +147,6 @@ function mergeDefaults(schemaObj, overridesObj = {}) {
     } else {
       // 直接值：覆盖
       result[cleanFieldName] = overrideValue;
-    }
-  }
-
-  return result;
-}
-
-/**
- * 从 schema 构建完整字段定义（包含类型前缀）
- */
-function buildSchemaWithPrefix(fields) {
-  const result = {};
-
-  for (const [fieldName, fieldConfig] of Object.entries(fields)) {
-    if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.fields) {
-      // 递归处理嵌套对象
-      result[fieldName] = buildSchemaWithPrefix(fieldConfig.fields);
-    } else if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.type) {
-      // 添加类型前缀
-      if (fieldConfig.type.startsWith('$')) {
-        result[`${fieldConfig.type} ${fieldName}`] = fieldConfig.default !== undefined ? fieldConfig.default : null;
-      } else {
-        result[fieldName] = fieldConfig.default !== undefined ? fieldConfig.default : null;
-      }
     }
   }
 
@@ -214,23 +258,42 @@ try {
   const yamlContent = fs.readFileSync(yamlPath, 'utf8');
   const schema = yaml.load(yamlContent);
 
-  // 读取运行时覆盖值
+  // 读取现有的 status.json
   const statusJsonPath = path.join(__dirname, 'data/status.json');
-  let statusJson = {};
+  let existingStatusJson = {};
   try {
-    statusJson = JSON.parse(fs.readFileSync(statusJsonPath, 'utf8'));
+    existingStatusJson = JSON.parse(fs.readFileSync(statusJsonPath, 'utf8'));
   } catch (e) {
-    // status.json 可能不存在或为空，使用空对象
-    console.log('⚠ data/status.json 未找到或为空，使用 schema 默认值');
+    console.log('⚠ data/status.json 不存在或无效，将从 schema 创建');
   }
+
+  // 从 schema 构建完整的初始化结构，保留现有的覆盖值
+  const updatedStatusJson = {
+    "{{user}}": buildInitialStructure(
+      schema['{{user}}'].fields,
+      existingStatusJson['{{user}}'] || {}
+    ),
+    "女人": {
+      "六花": buildInitialStructure(
+        schema['女人'].fields['六花'].fields,
+        existingStatusJson['女人'] && existingStatusJson['女人']['六花'] 
+          ? existingStatusJson['女人']['六花'] 
+          : {}
+      )
+    }
+  };
+
+  // 写入更新后的 status.json
+  fs.writeFileSync(statusJsonPath, JSON.stringify(updatedStatusJson, null, 2) + '\n');
+  console.log('✓ 已生成 data/status.json (包含所有 schema 字段)');
 
   // 验证覆盖值
   const warnings = [];
-  if (statusJson['{{user}}']) {
-    warnings.push(...validateOverrides(schema['{{user}}'].fields, statusJson['{{user}}'], '{{user}}'));
+  if (updatedStatusJson['{{user}}']) {
+    warnings.push(...validateOverrides(schema['{{user}}'].fields, updatedStatusJson['{{user}}'], '{{user}}'));
   }
-  if (statusJson['女人'] && statusJson['女人']['六花']) {
-    warnings.push(...validateOverrides(schema['女人'].fields['六花'].fields, statusJson['女人']['六花'], '女人.六花'));
+  if (updatedStatusJson['女人'] && updatedStatusJson['女人']['六花']) {
+    warnings.push(...validateOverrides(schema['女人'].fields['六花'].fields, updatedStatusJson['女人']['六花'], '女人.六花'));
   }
 
   // 输出警告
@@ -241,13 +304,13 @@ try {
   }
 
   // 生成 status-vars.debug.json
-  const charVarJson = buildCharVarJson(schema, statusJson);
+  const charVarJson = buildCharVarJson(schema, updatedStatusJson);
   const charVarPath = path.join(__dirname, 'data/status-vars.debug.json');
   fs.writeFileSync(charVarPath, JSON.stringify(charVarJson, null, 2) + '\n');
-  console.log('✓ 已生成 data/status-vars.debug.json (schema + status.json 覆盖)');
+  console.log('✓ 已生成 data/status-vars.debug.json (schema + status.json 合并)');
 
   if (warnings.length === 0) {
-    console.log('✓ 覆盖值验证通过');
+    console.log('✓ 所有验证通过');
   }
 
 } catch (error) {

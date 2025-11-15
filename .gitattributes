@@ -1,24 +1,24 @@
-# Auto detect text files and normalize line endings to CRLF
-* text=auto eol=crlf
+# Auto detect text files and normalize line endings to LF
+* text=auto eol=lf
 
-# Source code - use CRLF
-*.js text eol=crlf
-*.ts text eol=crlf
-*.tsx text eol=crlf
-*.jsx text eol=crlf
-*.json text eol=crlf
-*.css text eol=crlf
-*.scss text eol=crlf
-*.html text eol=crlf
-*.md text eol=crlf
-*.xml text eol=crlf
-*.yml text eol=crlf
-*.yaml text eol=crlf
+# Source code - use LF
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 
-# Batch files - also CRLF
-*.bat text eol=crlf
-*.cmd text eol=crlf
-*.ps1 text eol=crlf
+# Batch files - use LF for consistency
+*.bat text eol=lf
+*.cmd text eol=lf
+*.ps1 text eol=lf
 
 # Binary files
 *.png binary
