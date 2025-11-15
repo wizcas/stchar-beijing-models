@@ -7,21 +7,25 @@
 import "./style.css";
 
 // 导入模块
-import { CSS_CLASSES } from './css-constants.js';
-import { detectCharacterType } from './fields.js';
+import { CSS_CLASSES } from "./css-constants.js";
+import { detectCharacterType } from "./fields.js";
 import {
   createDiv,
   createCollapsibleCard,
   createWomanCardScrollContainer,
   generateCardTitle,
-  renderObject
-} from './renderer.js';
+  renderObject,
+} from "./renderer.js";
 import {
   loadData,
   getErrorMessage,
   getLoadingMessage,
-} from './modules/data-loader.js';
-import { CHARACTER_TYPES, DATA_LOADING, ELEMENT_IDS } from './modules/constants.js';
+} from "./modules/data-loader.js";
+import {
+  CHARACTER_TYPES,
+  DATA_LOADING,
+  ELEMENT_IDS,
+} from "./modules/constants.js";
 
 /**
  * @typedef {Object} CharacterData
@@ -52,7 +56,10 @@ function renderCharacterSection(sectionName, sectionData, container) {
 
   // 根据角色类型决定是否使用滚动容器
   let finalContent;
-  if (characterType === CHARACTER_TYPES.WOMAN || characterType === CHARACTER_TYPES.USER) {
+  if (
+    characterType === CHARACTER_TYPES.WOMAN ||
+    characterType === CHARACTER_TYPES.USER
+  ) {
     finalContent = createWomanCardScrollContainer(contentContainer);
   } else {
     finalContent = contentContainer;
@@ -64,14 +71,14 @@ function renderCharacterSection(sectionName, sectionData, container) {
   const cardStyles = {
     cardClass: CSS_CLASSES.CHARACTER_CARD,
     titleClass: CSS_CLASSES.SECTION_TITLE,
-    useRawTitle: true
+    useRawTitle: true,
   };
 
   const collapsibleCard = createCollapsibleCard(
     cardTitle,
     finalContent,
     initiallyCollapsed,
-    cardStyles
+    cardStyles,
   );
 
   container.appendChild(collapsibleCard);
@@ -101,7 +108,7 @@ function processWomanData(womanSection) {
 function updatePageTitle(userName) {
   const titleUserElement = document.querySelector(ELEMENT_IDS.TITLE_USER);
   if (titleUserElement) {
-    titleUserElement.textContent = userName || '{{user}}';
+    titleUserElement.textContent = userName || "{{user}}";
   }
 }
 
@@ -142,6 +149,77 @@ function findUserName(data) {
 }
 
 /**
+ * 从数据对象中查找用户角色数据
+ * @param {StatusBarData} data - 状态栏数据
+ * @returns {Object|null} 用户数据对象或 null
+ */
+function findUserData(data) {
+  for (const [sectionName, sectionData] of Object.entries(data)) {
+    if (typeof sectionData === "object" && sectionData !== null) {
+      const characterType = detectCharacterType(sectionName, sectionData);
+      if (characterType === CHARACTER_TYPES.USER) {
+        return sectionData;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * 渲染任务列表卡片
+ * @param {Object} userData - 用户数据对象
+ * @param {HTMLElement} container - 目标容器元素
+ * @returns {void}
+ */
+function renderTaskListCard(userData, container) {
+  // 查找拍摄任务数据
+  let taskListData = null;
+  for (const [key, value] of Object.entries(userData)) {
+    if (key.includes("拍摄任务")) {
+      taskListData = value;
+      break;
+    }
+  }
+
+  if (!taskListData || !Array.isArray(taskListData)) {
+    return; // 没有任务数据或数据格式不正确
+  }
+
+  // 将数组转换为对象格式，使用下标作为key
+  const taskObject = {};
+  taskListData.forEach((task, index) => {
+    taskObject[index] = task;
+  });
+  console.log({ taskListData, taskObject });
+
+  // 创建任务列表卡片标题
+  const taskCount = taskListData.length;
+  const cardTitle = `📋 拍摄任务 (${taskCount})`;
+
+  // 创建内容容器
+  const contentContainer = createDiv(CSS_CLASSES.CHARACTER_CONTENT);
+
+  // 渲染任务对象
+  renderObject(taskObject, contentContainer, "拍摄任务", 0);
+
+  // 创建可折叠卡片
+  const cardStyles = {
+    cardClass: CSS_CLASSES.CHARACTER_CARD,
+    titleClass: CSS_CLASSES.SECTION_TITLE,
+    useRawTitle: true,
+  };
+
+  const collapsibleCard = createCollapsibleCard(
+    cardTitle,
+    contentContainer,
+    true, // 默认折叠
+    cardStyles,
+  );
+
+  container.appendChild(collapsibleCard);
+}
+
+/**
  * 渲染所有角色部分
  * @param {StatusBarData} data - 状态栏数据
  * @param {HTMLElement} container - 目标容器元素
@@ -154,7 +232,9 @@ function renderAllCharacterSections(data, container) {
       if (sectionName === womanKey) {
         // 特殊处理女性角色数据结构 - 每个女性角色作为独立卡片
         const womanData = processWomanData(sectionData);
-        for (const [characterName, characterData] of Object.entries(womanData)) {
+        for (const [characterName, characterData] of Object.entries(
+          womanData,
+        )) {
           renderCharacterSection(characterName, characterData, container);
         }
       } else {
@@ -191,6 +271,12 @@ async function init() {
     // 查找用户名并更新标题
     const userName = findUserName(data);
     updatePageTitle(userName);
+
+    // 查找用户数据并渲染任务列表卡片
+    const userData = findUserData(data);
+    if (userData) {
+      renderTaskListCard(userData, container);
+    }
 
     // 渲染所有角色部分
     renderAllCharacterSections(data, container);
