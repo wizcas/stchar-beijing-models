@@ -60,11 +60,11 @@ function buildInitialStructure(fields, existingData = {}) {
 
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     const cleanFieldName = extractFieldName(fieldName);
-    
+
     // 检查是否有现有的覆盖值
     let existingValue = null;
     let foundExisting = false;
-    
+
     for (const [existingKey, existingVal] of Object.entries(existingData)) {
       if (extractFieldName(existingKey) === cleanFieldName) {
         existingValue = existingVal;
@@ -74,40 +74,46 @@ function buildInitialStructure(fields, existingData = {}) {
     }
 
     if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.fields) {
-      // 嵌套对象：递归处理
-      result[fieldName] = buildInitialStructure(
+      // 嵌套对象：递归处理，使用原始字段名（不带类型前缀）
+      result[cleanFieldName] = buildInitialStructure(
         fieldConfig.fields,
         foundExisting ? existingValue : {}
       );
     } else if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.type) {
-      // 有定义的字段：使用现有值或默认值
+      // 有定义的字段：构建带类型前缀的字段名
+      const typePrefix = fieldConfig.type;
+      const fieldNameWithType = typePrefix === 'string' || typePrefix === 'number' || typePrefix === 'object'
+        ? cleanFieldName  // 基础类型不需要前缀
+        : `${typePrefix} ${cleanFieldName}`;  // 特殊类型需要前缀
+
+      // 使用现有值或默认值
       if (foundExisting) {
-        result[fieldName] = existingValue;
+        result[fieldNameWithType] = existingValue;
       } else {
         // 使用默认值，如果没有则使用类型的合理默认值
         if (fieldConfig.default !== undefined) {
-          result[fieldName] = fieldConfig.default;
+          result[fieldNameWithType] = fieldConfig.default;
         } else {
           // 根据类型推断默认值
           if (fieldConfig.type === '$list') {
-            result[fieldName] = [];
+            result[fieldNameWithType] = [];
           } else if (fieldConfig.type.startsWith('$range')) {
-            result[fieldName] = 0;
+            result[fieldNameWithType] = 0;
           } else if (fieldConfig.type.startsWith('$enum')) {
             // 枚举类型：使用第一个值作为默认
             const enumMatch = fieldConfig.type.match(/\$enum=\{([^}]+)\}/);
             if (enumMatch) {
               const firstValue = enumMatch[1].split(';')[0];
-              result[fieldName] = firstValue;
+              result[fieldNameWithType] = firstValue;
             } else {
-              result[fieldName] = null;
+              result[fieldNameWithType] = null;
             }
           } else if (fieldConfig.type === '$ro') {
             // 只读字段：使用默认值或 null
-            result[fieldName] = fieldConfig.default || null;
+            result[fieldNameWithType] = fieldConfig.default || null;
           } else {
             // 默认为字符串或 null
-            result[fieldName] = fieldConfig.default || null;
+            result[fieldNameWithType] = fieldConfig.default || null;
           }
         }
       }
