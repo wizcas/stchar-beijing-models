@@ -564,15 +564,44 @@ function renderEquipmentObject(title, obj, container) {
 }
 
 /**
+ * 检查字段是否应该被隐藏
+ * @param {string} key - 字段键名
+ * @param {string} sectionName - 当前所在的部分名称
+ * @returns {boolean} 是否应该隐藏该字段
+ */
+function shouldHideField(key, sectionName) {
+  const cleanKey = cleanFieldName(key);
+
+  // 隐藏性爱部分的动情程度字段
+  if (sectionName === "性爱" && cleanKey === "动情程度") {
+    return true;
+  }
+
+  // 隐藏描述字段，因为它们被用来替换对应的数值字段显示
+  if (cleanKey === "堕落度描述" || cleanKey === "好感度描述") {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * 根据键值渲染字段
  * @param {string} key - 字段键名
  * @param {any} value - 字段值
  * @param {HTMLElement} container - 目标容器元素
  * @param {number} level - 嵌套层级
+ * @param {string} sectionName - 当前所在的部分名称
+ * @param {Object} parentObj - 父对象，用于查找描述字段
  * @returns {void}
  */
-function renderFieldByKey(key, value, container, level) {
+function renderFieldByKey(key, value, container, level, sectionName = "", parentObj = null) {
   const cleanKey = cleanFieldName(key);
+
+  // 检查是否应该隐藏该字段
+  if (shouldHideField(key, sectionName)) {
+    return;
+  }
 
   if (typeof value === "object" && value !== null) {
     if (Array.isArray(value)) {
@@ -584,8 +613,17 @@ function renderFieldByKey(key, value, container, level) {
       renderSubsection(cleanKey, value, container, level);
     }
   } else {
-    renderField(cleanKey, value, container);
+    renderField(cleanKey, value, container, parentObj);
   }
+}
+
+/**
+ * 格式化数字为带逗号分隔的字符串
+ * @param {number} num - 要格式化的数字
+ * @returns {string} 格式化后的字符串
+ */
+function formatNumberWithCommas(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 /**
@@ -593,10 +631,25 @@ function renderFieldByKey(key, value, container, level) {
  * @param {string} name - 字段名称
  * @param {any} value - 字段值
  * @param {HTMLElement} container - 目标容器元素
+ * @param {Object} parentObj - 父对象，用于查找描述字段
  * @returns {void}
  */
-function renderField(name, value, container) {
-  const fieldDiv = createField(name, value, Array.isArray(value));
+function renderField(name, value, container, parentObj = null) {
+  // 检查是否需要使用描述字段替换数值显示
+  let displayValue = value;
+  if (parentObj && (name === "堕落度" || name === "好感度")) {
+    const descriptionFieldName = name + "描述";
+    if (parentObj[descriptionFieldName]) {
+      displayValue = parentObj[descriptionFieldName];
+    }
+  }
+
+  // 特殊格式化资金字段
+  if (name === "资金" && typeof value === "number") {
+    displayValue = "￥" + formatNumberWithCommas(value);
+  }
+
+  const fieldDiv = createField(name, displayValue, Array.isArray(displayValue));
   container.appendChild(fieldDiv);
 }
 
@@ -678,7 +731,7 @@ function renderCharacterCard(obj, container, sectionName, order, orderSet) {
 
   // 渲染直接字段
   for (const [key, value] of Object.entries(directFields)) {
-    renderFieldByKey(key, value, container, 0);
+    renderFieldByKey(key, value, container, 0, sectionName, obj);
   }
 
   // 如果有子部分，创建子部分网格
@@ -754,20 +807,20 @@ function renderObject(obj, container, sectionName, level = 0) {
       // 按预定义顺序渲染字段
       for (const fieldKey of order) {
         if (processedObj.hasOwnProperty(fieldKey)) {
-          renderFieldByKey(fieldKey, processedObj[fieldKey], container, level);
+          renderFieldByKey(fieldKey, processedObj[fieldKey], container, level, sectionName, processedObj);
         }
       }
 
       // 渲染未在顺序中定义的字段（使用 Set 进行 O(1) 查找）
       for (const [key, value] of Object.entries(processedObj)) {
         if (!orderSet.has(key)) {
-          renderFieldByKey(key, value, container, level);
+          renderFieldByKey(key, value, container, level, sectionName, processedObj);
         }
       }
     } else {
       // 如果没有预定义顺序，按原始顺序渲染
       for (const [key, value] of Object.entries(processedObj)) {
-        renderFieldByKey(key, value, container, level);
+        renderFieldByKey(key, value, container, level, sectionName, processedObj);
       }
     }
   }
@@ -794,6 +847,8 @@ export {
   updateParentCollapsibleHeight,
   createCollapsibleCard,
   renderEquipmentObject,
+  shouldHideField,
+  formatNumberWithCommas,
   renderFieldByKey,
   renderField,
   renderArray,
