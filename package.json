@@ -12,7 +12,8 @@
     "analyze:tokens:verbose": "node analyze-tokens.js --verbose",
     "analyze:tokens:json": "node analyze-tokens.js --format json",
     "copy:status": "node copy-status.js",
-    "copy:html": "pnpm build:prod && node copy-html.js"
+    "copy:html": "pnpm build:prod && node copy-html.js",
+    "x:context": "node x-scripts/extract-context.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
