@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * 配置验证工具
+ * 配置验证工具 - 验证 status.yaml 的完整性和一致性
  * 
- * 验证:
- * 1. data/status.yaml (schema) 的有效性
- * 2. data/status.json (overrides) 是否符合 schema
- * 3. 生成的 data/status-vars.debug.json 是否完整
+ * status.yaml 是唯一真实来源
+ * 验证：
+ * 1. status.yaml 的 schema 定义是否有效
+ * 2. 所有字段是否有默认值
+ * 3. 默认值是否符合类型约束
  */
 
 const fs = require('fs');
@@ -14,69 +15,66 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 /**
- * 从带类型前缀的字段名中提取真实字段名
- */
-function extractFieldName(fieldNameWithPrefix) {
-  const prefixMatch = fieldNameWithPrefix.match(/^\$[a-z]+(\s*=\s*\{[^}]*\}|\s*=\s*\[[^\]]*\])?\s+/);
-  if (prefixMatch) {
-    return fieldNameWithPrefix.substring(prefixMatch[0].length);
-  }
-  return fieldNameWithPrefix;
-}
-
-/**
  * 验证 schema 中的字段定义
  */
-function validateSchema(schema, path = '') {
+function validateSchema(fields, path = '') {
   const warnings = [];
 
-  for (const [key, value] of Object.entries(schema)) {
-    if (key === 'description') continue;
+  for (const [fieldName, fieldConfig] of Object.entries(fields)) {
+    if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
-    const fullPath = path ? `${path}.${key}` : key;
+    const fullPath = path ? `${path}.${fieldName}` : fieldName;
 
-    if (value && typeof value === 'object') {
-      if (value.fields) {
-        // 这是一个分组对象
-        warnings.push(...validateSchema(value.fields, fullPath));
-      } else if (value.type && value.default === undefined) {
+    if (fieldConfig.fields) {
+      // 嵌套对象：递归验证
+      warnings.push(...validateSchema(fieldConfig.fields, fullPath));
+    } else if (fieldConfig.type) {
+      // 有类型定义的字段：验证默认值
+
+      // 1. 检查是否有默认值
+      if (fieldConfig.default === undefined) {
         warnings.push(`⚠ [${fullPath}] 缺少 default 值`);
-      } else if (value.type) {
-        // 验证 default 值是否符合类型定义
-        const typePrefix = value.type;
+        continue;
+      }
 
-        if (typePrefix.startsWith('$range')) {
-          const rangeMatch = typePrefix.match(/\$range=\[([^,]+),([^\]]+)\]/);
-          if (rangeMatch) {
-            const [, minStr, maxStr] = rangeMatch;
-            const min = parseFloat(minStr);
-            const max = parseFloat(maxStr);
+      const typePrefix = fieldConfig.type;
 
-            if (min > max) {
-              warnings.push(`❌ [${fullPath}] 范围错误: min (${min}) > max (${max})`);
-            }
+      // 2. 验证 default 值是否符合类型约束
+      if (typePrefix.startsWith('$range')) {
+        const rangeMatch = typePrefix.match(/\$range=\[([^,]+),([^\]]+)\]/);
+        if (rangeMatch) {
+          const [, minStr, maxStr] = rangeMatch;
+          const min = parseFloat(minStr);
+          const max = parseFloat(maxStr);
 
-            if (typeof value.default !== 'number') {
-              warnings.push(`⚠ [${fullPath}] 类型不匹配: 定义为 $range 但 default 是 ${typeof value.default}`);
-            } else if (value.default < min || value.default > max) {
-              warnings.push(`⚠ [${fullPath}] default 超出范围: ${value.default} 不在 [${min}, ${max}] 内`);
-            }
+          if (min > max) {
+            warnings.push(`❌ [${fullPath}] 范围错误: min (${min}) > max (${max})`);
+          }
+
+          if (typeof fieldConfig.default !== 'number') {
+            warnings.push(`⚠ [${fullPath}] 类型不匹配: 定义为 $range 但 default 是 ${typeof fieldConfig.default}`);
+          } else if (fieldConfig.default < min || fieldConfig.default > max) {
+            warnings.push(`⚠ [${fullPath}] default 超出范围: ${fieldConfig.default} 不在 [${min}, ${max}] 内`);
           }
         }
+      }
 
-        if (typePrefix.startsWith('$enum')) {
-          const enumMatch = typePrefix.match(/\$enum=\{([^}]+)\}/);
-          if (enumMatch) {
-            const validValues = enumMatch[1].split(';');
-            if (!validValues.includes(value.default)) {
-              warnings.push(`⚠ [${fullPath}] default 不在枚举中: "${value.default}" 不在 {${validValues.join(';')}} 中`);
-            }
+      if (typePrefix.startsWith('$enum')) {
+        const enumMatch = typePrefix.match(/\$enum=\{([^}]+)\}/);
+        if (enumMatch) {
+          const validValues = enumMatch[1].split(';');
+          if (!validValues.includes(fieldConfig.default)) {
+            warnings.push(`⚠ [${fullPath}] default 不在枚举中: "${fieldConfig.default}" 不在 {${validValues.join(';')}} 中`);
           }
         }
+      }
 
-        if (typePrefix === '$list' && !Array.isArray(value.default)) {
-          warnings.push(`⚠ [${fullPath}] 类型不匹配: 定义为 $list 但 default 是 ${typeof value.default}`);
-        }
+      if (typePrefix === '$list' && !Array.isArray(fieldConfig.default)) {
+        warnings.push(`⚠ [${fullPath}] 类型不匹配: 定义为 $list 但 default 是 ${typeof fieldConfig.default}`);
+      }
+
+      if (typePrefix === '$ro' && fieldConfig.default === undefined) {
+        warnings.push(`⚠ [${fullPath}] 只读字段应有 default 值`);
       }
     }
   }
@@ -85,110 +83,120 @@ function validateSchema(schema, path = '') {
 }
 
 /**
- * 验证 schema 和 status.json 的一致性
+ * 统计 schema 中的字段数量
  */
-function validateConsistency(schema, statusJson) {
-  const warnings = [];
+function countFields(fields) {
+  let count = 0;
+  for (const [, fieldConfig] of Object.entries(fields)) {
+    if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
-  function checkFields(schemaFields, statusFields, path = '') {
-    if (!statusFields) return;
-
-    for (const [statusKey, statusValue] of Object.entries(statusFields)) {
-      const cleanFieldName = extractFieldName(statusKey);
-      const fullPath = path ? `${path}.${cleanFieldName}` : cleanFieldName;
-
-      // 查找对应的 schema 字段
-      let found = false;
-      for (const [schemaKey, schemaValue] of Object.entries(schemaFields)) {
-        if (schemaKey === cleanFieldName) {
-          found = true;
-          
-          // 如果是嵌套对象，递归检查
-          if (schemaValue.fields && statusValue !== null && typeof statusValue === 'object' && !Array.isArray(statusValue)) {
-            checkFields(schemaValue.fields, statusValue, fullPath);
-          }
-          break;
-        }
-      }
-
-      if (!found) {
-        warnings.push(`⚠ [${fullPath}] 字段不在 schema 中`);
-      }
+    if (fieldConfig.fields) {
+      count += countFields(fieldConfig.fields);
+    } else {
+      count++;
     }
   }
-
-  if (schema['{{user}}'] && schema['{{user}}'].fields && statusJson['{{user}}']) {
-    checkFields(schema['{{user}}'].fields, statusJson['{{user}}'], '{{user}}');
-  }
-
-  if (schema['女人'] && schema['女人'].fields && schema['女人'].fields['六花'] && schema['女人'].fields['六花'].fields && statusJson['女人'] && statusJson['女人']['六花']) {
-    checkFields(schema['女人'].fields['六花'].fields, statusJson['女人']['六花'], '女人.六花');
-  }
-
-  return warnings;
+  return count;
 }
 
 try {
-  console.log('验证配置系统...\n');
+  console.log('🔍 验证配置系统...\n');
 
-  // 验证 schema
-  console.log('1. 验证 data/status.yaml (schema)');
+  // 读取和解析 schema
+  console.log('1. 解析 data/status.yaml');
   const yamlPath = path.join(__dirname, 'data/status.yaml');
   const yamlContent = fs.readFileSync(yamlPath, 'utf8');
   const schema = yaml.load(yamlContent);
-  const schemaWarnings = validateSchema(schema);
+  console.log('   ✓ YAML 解析成功\n');
 
-  if (schemaWarnings.length === 0) {
-    console.log('   ✓ Schema 定义有效\n');
-  } else {
-    console.log(`   ⚠ 检测到 ${schemaWarnings.length} 个问题:\n`);
-    schemaWarnings.forEach(w => console.log(`   ${w}`));
-    console.log();
-  }
+  // 验证各部分的 schema
+  console.log('2. 验证 schema 定义');
+  let totalWarnings = [];
 
-  // 验证 status.json
-  console.log('2. 验证 data/status.json (覆盖值)');
-  const statusJsonPath = path.join(__dirname, 'data/status.json');
-  let statusJson = {};
-  let hasStatusJson = false;
-  try {
-    statusJson = JSON.parse(fs.readFileSync(statusJsonPath, 'utf8'));
-    hasStatusJson = true;
-  } catch (e) {
-    console.log('   ⚠ data/status.json 未找到或为空\n');
-  }
-
-  if (hasStatusJson) {
-    const consistencyWarnings = validateConsistency(schema, statusJson);
-    if (consistencyWarnings.length === 0) {
-      console.log('   ✓ 覆盖值与 schema 一致\n');
+  // 验证世界部分
+  if (schema['世界'] && schema['世界'].fields) {
+    const worldWarnings = validateSchema(schema['世界'].fields, '世界');
+    if (worldWarnings.length === 0) {
+      const count = countFields(schema['世界'].fields);
+      console.log(`   ✓ 世界部分 (${count} 个字段)`);
     } else {
-      console.log(`   ⚠ 检测到 ${consistencyWarnings.length} 个问题:\n`);
-      consistencyWarnings.forEach(w => console.log(`   ${w}`));
-      console.log();
+      totalWarnings.push(...worldWarnings);
     }
   }
 
-  // 验证 status-vars.debug.json
-  console.log('3. 验证 data/status-vars.debug.json (生成数据)');
-  const charVarPath = path.join(__dirname, 'data/status-vars.debug.json');
+  // 验证用户部分
+  if (schema['{{user}}'] && schema['{{user}}'].fields) {
+    const userWarnings = validateSchema(schema['{{user}}'].fields, '{{user}}');
+    if (userWarnings.length === 0) {
+      const count = countFields(schema['{{user}}'].fields);
+      console.log(`   ✓ {{user}} 部分 (${count} 个字段)`);
+    } else {
+      totalWarnings.push(...userWarnings);
+    }
+  }
+
+  // 验证女性角色部分
+  if (schema['女人'] && schema['女人'].fields) {
+    for (const [charName, charConfig] of Object.entries(schema['女人'].fields)) {
+      if (charConfig && charConfig.fields) {
+        const charWarnings = validateSchema(charConfig.fields, `女人.${charName}`);
+        if (charWarnings.length === 0) {
+          const count = countFields(charConfig.fields);
+          console.log(`   ✓ 女人.${charName} (${count} 个字段)`);
+        } else {
+          totalWarnings.push(...charWarnings);
+        }
+      }
+    }
+  }
+
+  console.log();
+
+  // 验证生成的文件
+  console.log('3. 验证生成的文件');
+
+  // 检查 status.json
   try {
+    const statusJsonPath = path.join(__dirname, 'data/status.json');
+    const statusJson = JSON.parse(fs.readFileSync(statusJsonPath, 'utf8'));
+    console.log('   ✓ data/status.json 有效');
+  } catch (e) {
+    console.log(`   ⚠ data/status.json 无效: ${e.message}`);
+  }
+
+  // 检查 status-vars.debug.json
+  try {
+    const charVarPath = path.join(__dirname, 'data/status-vars.debug.json');
     const charVar = JSON.parse(fs.readFileSync(charVarPath, 'utf8'));
-    const xiaoi = charVar['状态栏']['小二'];
-    const liuhua = charVar['状态栏']['女人']['六花'];
+    
+    if (charVar['状态栏']) {
+      const worldData = charVar['状态栏']['世界'];
+      const userData = charVar['状态栏']['小二'];
+      const womenData = charVar['状态栏']['女人'];
 
-    if (xiaoi && Object.keys(xiaoi).length > 0 && liuhua && Object.keys(liuhua).length > 0) {
-      console.log('   ✓ status-vars.debug.json 完整且有效');
-      console.log(`     - 小二字段数: ${Object.keys(xiaoi).length}`);
-      console.log(`     - 六花字段数: ${Object.keys(liuhua).length}`);
-    } else {
-      console.log('   ❌ status-vars.debug.json 数据不完整');
+      let count = 0;
+      if (worldData) count += Object.keys(worldData).length;
+      if (userData) count += Object.keys(userData).length;
+      if (womenData && womenData['六花']) count += Object.keys(womenData['六花']).length;
+
+      console.log(`   ✓ data/status-vars.debug.json 有效 (${count} 个字段)`);
     }
   } catch (e) {
-    console.log('   ⚠ status-vars.debug.json 无法读取');
+    console.log(`   ⚠ data/status-vars.debug.json 无效: ${e.message}`);
   }
 
-  console.log('\n✓ 验证完成');
+  console.log();
+
+  // 输出验证结果
+  if (totalWarnings.length === 0) {
+    console.log('✅ 所有验证通过\n');
+    process.exit(0);
+  } else {
+    console.log(`⚠️  检测到 ${totalWarnings.length} 个问题:\n`);
+    totalWarnings.forEach(w => console.log(`  ${w}`));
+    console.log();
+    process.exit(1);
+  }
 
 } catch (error) {
   console.error('❌ 验证失败:', error.message);

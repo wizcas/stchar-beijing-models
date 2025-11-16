@@ -1,6 +1,6 @@
-# 状态字段 Schema 定义
-# 该文件定义所有支持的字段及其类型约束
-# 生成时会与 status.json 合并，产生完整的初始化数据
+# 状态字段 Schema 定义（唯一真实来源）
+# 该文件定义所有支持的字段、类型约束、默认值和说明
+# 应用启动时从该文件读取并初始化所有状态
 
 世界:
   description: "当前世界状态（时间、地点、天气）"
@@ -19,13 +19,15 @@
       default: "天色阴沉，空气寒冷刺鼻，但屋内的暖气把脸烤得红通通的。"
 
 "{{user}}":
-  description: "玩家角色"
+  description: "玩家角色（摄影师）"
   fields:
     行业等级:
       type: "$enum={专业;资深;名家}"
+      description: "摄影师的专业等级"
       default: "专业"
     堕落度:
       type: "$range=[0,100]"
+      description: "摄影师的道德堕落程度（0为守规则，100为无底线）"
       default: 0
     堕落度描述:
       type: "string"
@@ -33,60 +35,88 @@
       default: "严格遵守职业操守，维护专业形象，从不逾越底线。"
     穿搭:
       type: "string"
+      description: "摄影师的着装描述"
       default: "黑色短袖T恤配牛仔裤。"
     想法:
       type: "string"
+      description: "摄影师的内心想法"
       default: "终于要开张了，哥们儿我以后就是独立艺术家了！希望这'六花'不是个奇怪的人……我可不想第一单就翻车。"
     资金:
       type: "number"
+      description: "摄影师当前的资金数额"
       default: 10000
     拍摄任务:
       type: "$list"
+      description: "摄影师接下来的拍摄任务列表"
       default:
-        - 目标: ""
-          报酬: ""
-          模特: ""
-          期限: ""
-          特殊要求: ""
+        - 目标: "邀约六花进行互免拍摄"
+          报酬: 0
+          模特: "六花"
+          期限: "2024-12-31"
+          特殊要求: "互免拍摄"
     器材:
       type: "object"
+      description: "摄影师拥有的器材"
       fields:
         机身:
           type: "$list"
-          default: []
+          description: "相机机身列表"
+          default:
+            - "Canon EOS R6 (二手)"
         镜头:
           type: "$list"
-          default: []
+          description: "镜头列表"
+          default:
+            - "Canon RF 50mm f/1.8 STM"
+            - "Canon RF 85mm f/2 MACRO IS STM"
         灯光:
           type: "$list"
-          default: []
+          description: "闪光灯和补光设备"
+          default:
+            - "神牛 Godox AD200 Pro"
+            - "神牛 Godox AD200 Pro"
+            - "神牛 Godox XPro-C 引闪器"
         配件:
           type: "$list"
-          default: []
+          description: "摄影配件"
+          default:
+            - "专业摄影背包"
+            - "三脚架"
+            - "灯架"
+            - "高速SD卡"
+            - "备用电池"
         其他:
           type: "$list"
-          default: []
+          description: "其他器材"
+          default:
+            - "Dell Inspiron 16 Plus 笔记本电脑"
 
 女人:
-  description: "女性角色"
+  description: "女性角色数据"
   fields:
     六花:
       type: "object"
+      description: "六花角色数据"
       fields:
         昵称:
           type: "$ro"
+          description: "角色昵称（只读）"
           default: "六花"
         真名:
           type: "$ro"
+          description: "角色真名（只读）"
           default: "林六花"
         想法:
           type: "string"
+          description: "角色当前的内心想法"
           default: "第一次找专业摄影师拍照呢，好紧张……{{user}}哥哥会是个什么样的人呢？"
         关系:
           type: "object"
+          description: "与摄影师的关系数据"
           fields:
             堕落度:
               type: "$range=[0,100]"
+              description: "角色的道德堕落程度（0为坚守底线，100为无底线）"
               default: 0
             堕落度描述:
               type: "string"
@@ -94,6 +124,7 @@
               default: "对自身有清晰的底线，坚定地保护自己，拒绝向{{user}}妥协。"
             好感度:
               type: "$range=[-100,100]"
+              description: "对摄影师的好感度（-100为仇恨，100为深爱）"
               default: 0
             好感度描述:
               type: "string"
@@ -101,63 +132,88 @@
               default: "与{{user}}陌生，保持基本的商业关系。"
         外型:
           type: "object"
+          description: "角色的外观描述"
           fields:
             五官:
               type: "string"
-              default: ""
+              description: "五官特征描述"
+              default: "桃花眼，小鼻子，唇形微翘"
             发型:
               type: "string"
-              default: ""
+              description: "发型描述"
+              default: "黑色中长直发"
             穿搭:
               type: "string"
-              default: ""
+              description: "服装和穿着描述"
+              default: "粉色棉质长袖长裤睡衣/未穿内衣/棉质内裤。"
             身高:
               type: "$range=[100,250]"
-              default: 160
+              description: "身高（单位：cm）"
+              default: 168
             体重:
               type: "$range=[30,150]"
-              default: 50
+              description: "体重（单位：kg）"
+              default: 52
             胸围:
               type: "$range=[60,120]"
-              default: 80
+              description: "胸围（单位：cm）"
+              default: 88
             腰围:
               type: "$range=[40,120]"
+              description: "腰围（单位：cm）"
               default: 60
             臀围:
               type: "$range=[60,120]"
-              default: 85
+              description: "臀围（单位：cm）"
+              default: 90
             罩杯:
               type: "string"
-              default: ""
+              description: "胸部罩杯大小"
+              default: "B"
         职业:
           type: "object"
+          description: "角色的职业信息"
           fields:
             类型:
               type: "$list"
-              default: []
+              description: "职业类型列表"
+              default:
+                - "学生"
+                - "模特"
             层级:
               type: "$enum={新手;进阶;专业}"
+              description: "模特等级"
               default: "新手"
             方向:
               type: "$enum={专业;多元;退出;卖身}"
-              default: "专业"
+              description: "模特方向/路线"
+              default: "多元"
             尺度:
               type: "$enum={清纯;性感;大尺度;私密}"
+              description: "可接受的内容尺度"
               default: "清纯"
             人设:
               type: "$list"
-              default: []
+              description: "角色人设标签列表"
+              default:
+                - "新手"
         性爱:
           type: "object"
+          description: "角色的性爱状态数据"
           fields:
             性癖:
               type: "$list"
-              default: []
+              description: "性癖好列表"
+              default:
+                - "纯爱"
+                - "年上"
             性经验次数:
               type: "$range=[0,10000]"
+              description: "性经验次数"
               default: 0
             动情程度:
               type: "$range=[0,100]"
+              description: "当前的动情/兴奋程度（0为冷静，100为极度兴奋）"
               default: 0
             乳房:
               type: "string"

@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * 配置生成工具
+ * 配置生成工具 - 从 status.yaml 生成所有配置文件
+ * 
+ * status.yaml 是唯一真实来源 (Single Source of Truth)
  * 
  * 流程:
- * 1. 读取 data/status.yaml (schema 定义)
- * 2. 从 schema 生成完整的 data/status.json (包含所有字段的默认值或覆盖值)
- * 3. 合并: schema defaults + 已有的 status.json 覆盖值
- * 4. 生成 data/status-vars.debug.json (完整的运行时数据)
+ * 1. 读取 data/status.yaml (完整的 schema + 默认值)
+ * 2. 提取 schema 定义和默认值
+ * 3. 生成 data/status.json (仅包含默认值，不含类型前缀)
+ * 4. 生成 data/status-vars.debug.json (状态栏格式，用于测试)
  * 
  * 目标:
- * - status.json 始终包含 status.yaml 中定义的所有字段
- * - 用默认值初始化新字段
- * - 保留已有的自定义覆盖值
- * - 用于酒馆角色卡的初始化数据
+ * - status.json: 编辑用途，包含所有初始值
+ * - status-vars.debug.json: 测试用途，符合白X变量格式
  */
 
 const fs = require('fs');
@@ -21,303 +21,157 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 /**
- * 从带类型前缀的字段名中提取真实字段名
- * 例如: "$range=[0,100] 堕落度" → "堕落度"
+ * 从 yaml schema 中提取所有字段的默认值
  */
-function extractFieldName(fieldNameWithPrefix) {
-  const prefixMatch = fieldNameWithPrefix.match(/^\$[a-z]+(\s*=\s*\{[^}]*\}|\s*=\s*\[[^\]]*\])?\s+/);
-  if (prefixMatch) {
-    return fieldNameWithPrefix.substring(prefixMatch[0].length);
-  }
-  return fieldNameWithPrefix;
-}
+function extractDefaults(fields) {
+  const defaults = {};
 
-/**
- * 递归提取字段定义，移除类型前缀
- */
-function extractFieldDefinitions(obj) {
-  const definitions = {};
+  for (const [fieldName, fieldConfig] of Object.entries(fields)) {
+    if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
-  for (const [key, value] of Object.entries(obj)) {
-    const fieldName = extractFieldName(key);
-
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      definitions[fieldName] = extractFieldDefinitions(value);
+    if (fieldConfig.fields) {
+      // 嵌套对象：递归提取
+      defaults[fieldName] = extractDefaults(fieldConfig.fields);
+    } else if (fieldConfig.default !== undefined) {
+      // 有默认值：直接使用
+      defaults[fieldName] = fieldConfig.default;
     } else {
-      definitions[fieldName] = value;
+      // 无默认值：根据类型推断
+      if (fieldConfig.type === '$list') {
+        defaults[fieldName] = [];
+      } else if (fieldConfig.type && fieldConfig.type.startsWith('$range')) {
+        defaults[fieldName] = 0;
+      } else if (fieldConfig.type && fieldConfig.type.startsWith('$enum')) {
+        // 枚举类型：使用第一个值
+        const enumMatch = fieldConfig.type.match(/\$enum=\{([^}]+)\}/);
+        if (enumMatch) {
+          defaults[fieldName] = enumMatch[1].split(';')[0];
+        } else {
+          defaults[fieldName] = null;
+        }
+      } else if (fieldConfig.type === '$ro') {
+        defaults[fieldName] = null;
+      } else {
+        defaults[fieldName] = null;
+      }
     }
   }
 
-  return definitions;
+  return defaults;
 }
 
 /**
- * 从 schema 构建完整的初始化结构（包含所有字段）
- * 保留类型前缀用于 status.json
+ * 生成带类型前缀的字段名（用于 status-vars.debug.json）
  */
-function buildInitialStructure(fields, existingData = {}) {
+function buildFieldWithPrefix(fieldName, fieldConfig) {
+  const typePrefix = fieldConfig.type;
+
+  // 基础类型不需要前缀
+  if (!typePrefix || typePrefix === 'string' || typePrefix === 'number' || typePrefix === 'object') {
+    return fieldName;
+  }
+
+  // 特殊类型需要前缀
+  return `${typePrefix} ${fieldName}`;
+}
+
+/**
+ * 从 yaml 生成带前缀的完整结构（用于状态栏）
+ */
+function buildPrefixedStructure(fields, defaults = {}) {
   const result = {};
 
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
-    const cleanFieldName = extractFieldName(fieldName);
+    if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
-    // 检查是否有现有的覆盖值
-    let existingValue = null;
-    let foundExisting = false;
-
-    for (const [existingKey, existingVal] of Object.entries(existingData)) {
-      if (extractFieldName(existingKey) === cleanFieldName) {
-        existingValue = existingVal;
-        foundExisting = true;
-        break;
-      }
-    }
-
-    if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.fields) {
-      // 嵌套对象：递归处理，使用原始字段名（不带类型前缀）
-      result[cleanFieldName] = buildInitialStructure(
+    if (fieldConfig.fields) {
+      // 嵌套对象：递归处理
+      result[fieldName] = buildPrefixedStructure(
         fieldConfig.fields,
-        foundExisting ? existingValue : {}
-      );
-    } else if (fieldConfig && typeof fieldConfig === 'object' && fieldConfig.type) {
-      // 有定义的字段：构建带类型前缀的字段名
-      const typePrefix = fieldConfig.type;
-      const fieldNameWithType = typePrefix === 'string' || typePrefix === 'number' || typePrefix === 'object'
-        ? cleanFieldName  // 基础类型不需要前缀
-        : `${typePrefix} ${cleanFieldName}`;  // 特殊类型需要前缀
-
-      // 使用现有值或默认值
-      if (foundExisting) {
-        result[fieldNameWithType] = existingValue;
-      } else {
-        // 使用默认值，如果没有则使用类型的合理默认值
-        if (fieldConfig.default !== undefined) {
-          result[fieldNameWithType] = fieldConfig.default;
-        } else {
-          // 根据类型推断默认值
-          if (fieldConfig.type === '$list') {
-            result[fieldNameWithType] = [];
-          } else if (fieldConfig.type.startsWith('$range')) {
-            result[fieldNameWithType] = 0;
-          } else if (fieldConfig.type.startsWith('$enum')) {
-            // 枚举类型：使用第一个值作为默认
-            const enumMatch = fieldConfig.type.match(/\$enum=\{([^}]+)\}/);
-            if (enumMatch) {
-              const firstValue = enumMatch[1].split(';')[0];
-              result[fieldNameWithType] = firstValue;
-            } else {
-              result[fieldNameWithType] = null;
-            }
-          } else if (fieldConfig.type === '$ro') {
-            // 只读字段：使用默认值或 null
-            result[fieldNameWithType] = fieldConfig.default || null;
-          } else {
-            // 默认为字符串或 null
-            result[fieldNameWithType] = fieldConfig.default || null;
-          }
-        }
-      }
-    }
-  }
-
-  return result;
-}
-
-/**
- * 递归合并: schema defaults + overrides
- * overrides 中的值会覆盖 defaults
- */
-function mergeDefaults(schemaObj, overridesObj = {}) {
-  const result = {};
-
-  // 首先应用 schema 的默认值
-  for (const [key, schemaValue] of Object.entries(schemaObj)) {
-    if (schemaValue && typeof schemaValue === 'object' && schemaValue.default !== undefined) {
-      result[key] = schemaValue.default;
-    } else if (schemaValue && typeof schemaValue === 'object' && schemaValue.fields) {
-      // 递归处理嵌套对象
-      result[key] = mergeDefaults(schemaValue.fields, {});
-    }
-  }
-
-  // 然后应用覆盖值
-  for (const [key, overrideValue] of Object.entries(overridesObj)) {
-    const cleanFieldName = extractFieldName(key);
-    
-    if (overrideValue !== null && typeof overrideValue === 'object' && !Array.isArray(overrideValue)) {
-      // 嵌套对象：递归合并
-      result[cleanFieldName] = mergeDefaults(
-        schemaObj[key] && schemaObj[key].fields ? schemaObj[key].fields : {},
-        overrideValue
+        defaults[fieldName] || {}
       );
     } else {
-      // 直接值：覆盖
-      result[cleanFieldName] = overrideValue;
+      // 添加类型前缀
+      const prefixedName = buildFieldWithPrefix(fieldName, fieldConfig);
+      result[prefixedName] = defaults[fieldName] !== undefined ? defaults[fieldName] : null;
     }
   }
 
   return result;
-}
-
-/**
- * 验证覆盖值是否符合 schema 定义
- */
-function validateOverrides(schemaObj, overridesObj, path = '') {
-  const warnings = [];
-
-  for (const [overrideKey, overrideValue] of Object.entries(overridesObj)) {
-    const cleanFieldName = extractFieldName(overrideKey);
-    const fullPath = path ? `${path}.${cleanFieldName}` : cleanFieldName;
-
-    // 查找对应的 schema 定义
-    let schemaFieldConfig = null;
-    for (const [schemaKey, schemaValue] of Object.entries(schemaObj)) {
-      if (schemaKey === cleanFieldName || extractFieldName(schemaKey) === cleanFieldName) {
-        schemaFieldConfig = schemaValue;
-        break;
-      }
-    }
-
-    if (!schemaFieldConfig) {
-      warnings.push(`⚠ [${fullPath}] 字段不在 schema 中定义`);
-      continue;
-    }
-
-    // 如果是嵌套对象，递归验证
-    if (schemaFieldConfig.fields && overrideValue !== null && typeof overrideValue === 'object' && !Array.isArray(overrideValue)) {
-      warnings.push(...validateOverrides(schemaFieldConfig.fields, overrideValue, fullPath));
-    } else if (schemaFieldConfig.type) {
-      // 验证类型约束
-      const typePrefix = schemaFieldConfig.type;
-
-      if (typePrefix.startsWith('$range')) {
-        const rangeMatch = typePrefix.match(/\$range=\[([^,]+),([^\]]+)\]/);
-        if (rangeMatch) {
-          const [, minStr, maxStr] = rangeMatch;
-          const min = parseFloat(minStr);
-          const max = parseFloat(maxStr);
-          
-          if (typeof overrideValue !== 'number') {
-            warnings.push(`⚠ [${fullPath}] 类型不匹配: schema 定义为 $range 但值是 ${typeof overrideValue}`);
-          } else if (overrideValue < min || overrideValue > max) {
-            warnings.push(`⚠ [${fullPath}] 值超出范围: ${overrideValue} 不在 [${min}, ${max}] 内`);
-          }
-        }
-      }
-
-      if (typePrefix.startsWith('$enum')) {
-        const enumMatch = typePrefix.match(/\$enum=\{([^}]+)\}/);
-        if (enumMatch) {
-          const validValues = enumMatch[1].split(';');
-          if (!validValues.includes(overrideValue)) {
-            warnings.push(`⚠ [${fullPath}] 值不在枚举列表中: "${overrideValue}" 不在 {${validValues.join(';')}} 中`);
-          }
-        }
-      }
-
-      if (typePrefix === '$list' && !Array.isArray(overrideValue)) {
-        warnings.push(`⚠ [${fullPath}] 类型不匹配: schema 定义为 $list 但值是 ${typeof overrideValue}`);
-      }
-    }
-  }
-
-  return warnings;
-}
-
-/**
- * 从 schema 和 overrides 生成 status-vars.debug.json
- */
-function buildCharVarJson(schema, statusJson) {
-  const charVar = {
-    "状态栏": {
-      "小二": {},
-      "女人": {
-        "六花": {}
-      }
-    }
-  };
-
-  // 处理 {{user}} → 小二
-  if (schema['{{user}}'] && schema['{{user}}'].fields) {
-    const merged = mergeDefaults(
-      schema['{{user}}'].fields,
-      statusJson['{{user}}'] || {}
-    );
-    charVar['状态栏']['小二'] = merged;
-  }
-
-  // 处理 女人.六花
-  if (schema['女人'] && schema['女人'].fields && schema['女人'].fields['六花'] && schema['女人'].fields['六花'].fields) {
-    const merged = mergeDefaults(
-      schema['女人'].fields['六花'].fields,
-      statusJson['女人'] && statusJson['女人']['六花'] ? statusJson['女人']['六花'] : {}
-    );
-    charVar['状态栏']['女人']['六花'] = merged;
-  }
-
-  return charVar;
 }
 
 try {
+  console.log('📋 从 status.yaml 生成配置文件...\n');
+
   // 读取 schema
   const yamlPath = path.join(__dirname, 'data/status.yaml');
   const yamlContent = fs.readFileSync(yamlPath, 'utf8');
   const schema = yaml.load(yamlContent);
 
-  // 读取现有的 status.json
-  const statusJsonPath = path.join(__dirname, 'data/status.json');
-  let existingStatusJson = {};
-  try {
-    existingStatusJson = JSON.parse(fs.readFileSync(statusJsonPath, 'utf8'));
-  } catch (e) {
-    console.log('⚠ data/status.json 不存在或无效，将从 schema 创建');
+  // 生成 status.json（无前缀版本）
+  const statusJson = {};
+
+  // 处理世界信息
+  if (schema['世界'] && schema['世界'].fields) {
+    statusJson['世界'] = extractDefaults(schema['世界'].fields);
   }
 
-  // 从 schema 构建完整的初始化结构，保留现有的覆盖值
-  const updatedStatusJson = {
-    "{{user}}": buildInitialStructure(
-      schema['{{user}}'].fields,
-      existingStatusJson['{{user}}'] || {}
-    ),
-    "女人": {
-      "六花": buildInitialStructure(
-        schema['女人'].fields['六花'].fields,
-        existingStatusJson['女人'] && existingStatusJson['女人']['六花'] 
-          ? existingStatusJson['女人']['六花'] 
-          : {}
-      )
+  // 处理用户（{{user}}）
+  if (schema['{{user}}'] && schema['{{user}}'].fields) {
+    statusJson['{{user}}'] = extractDefaults(schema['{{user}}'].fields);
+  }
+
+  // 处理女性角色
+  if (schema['女人'] && schema['女人'].fields) {
+    statusJson['女人'] = {};
+    for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
+      if (characterConfig && characterConfig.fields) {
+        statusJson['女人'][characterName] = extractDefaults(characterConfig.fields);
+      }
     }
+  }
+
+  // 写入 status.json
+  const statusJsonPath = path.join(__dirname, 'data/status.json');
+  fs.writeFileSync(statusJsonPath, JSON.stringify(statusJson, null, 2) + '\n');
+  console.log('✓ 已生成 data/status.json (所有默认值，无类型前缀)');
+
+  // 生成 status-vars.debug.json（用于测试，符合白X格式）
+  const charVar = {
+    '状态栏': {}
   };
 
-  // 写入更新后的 status.json
-  fs.writeFileSync(statusJsonPath, JSON.stringify(updatedStatusJson, null, 2) + '\n');
-  console.log('✓ 已生成 data/status.json (包含所有 schema 字段)');
-
-  // 验证覆盖值
-  const warnings = [];
-  if (updatedStatusJson['{{user}}']) {
-    warnings.push(...validateOverrides(schema['{{user}}'].fields, updatedStatusJson['{{user}}'], '{{user}}'));
-  }
-  if (updatedStatusJson['女人'] && updatedStatusJson['女人']['六花']) {
-    warnings.push(...validateOverrides(schema['女人'].fields['六花'].fields, updatedStatusJson['女人']['六花'], '女人.六花'));
+  // 添加世界信息
+  if (schema['世界'] && schema['世界'].fields) {
+    const worldDefaults = extractDefaults(schema['世界'].fields);
+    charVar['状态栏']['世界'] = buildPrefixedStructure(schema['世界'].fields, worldDefaults);
   }
 
-  // 输出警告
-  if (warnings.length > 0) {
-    console.log('⚠ 覆盖值验证警告:\n');
-    warnings.forEach(w => console.log(w));
-    console.log();
+  // 添加用户信息
+  if (schema['{{user}}'] && schema['{{user}}'].fields) {
+    const userDefaults = extractDefaults(schema['{{user}}'].fields);
+    // 使用第一个用户的昵称作为 key，或默认为 "小二"
+    const userName = '小二';
+    charVar['状态栏'][userName] = buildPrefixedStructure(schema['{{user}}'].fields, userDefaults);
   }
 
-  // 生成 status-vars.debug.json
-  const charVarJson = buildCharVarJson(schema, updatedStatusJson);
+  // 添加女性角色
+  if (schema['女人'] && schema['女人'].fields) {
+    charVar['状态栏']['女人'] = {};
+    for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
+      if (characterConfig && characterConfig.fields) {
+        const charDefaults = extractDefaults(characterConfig.fields);
+        charVar['状态栏']['女人'][characterName] = buildPrefixedStructure(characterConfig.fields, charDefaults);
+      }
+    }
+  }
+
+  // 写入 status-vars.debug.json
   const charVarPath = path.join(__dirname, 'data/status-vars.debug.json');
-  fs.writeFileSync(charVarPath, JSON.stringify(charVarJson, null, 2) + '\n');
-  console.log('✓ 已生成 data/status-vars.debug.json (schema + status.json 合并)');
+  fs.writeFileSync(charVarPath, JSON.stringify(charVar, null, 2) + '\n');
+  console.log('✓ 已生成 data/status-vars.debug.json (测试用，含类型前缀)');
 
-  if (warnings.length === 0) {
-    console.log('✓ 所有验证通过');
-  }
+  console.log('\n✓ 配置生成完成');
 
 } catch (error) {
   console.error('❌ 生成失败:', error.message);
