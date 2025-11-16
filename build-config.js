@@ -25,12 +25,12 @@ function extractDefaults(fields) {
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
-    if (fieldConfig.fields) {
+    // 优先检查显式的 default 字段（适用于对象、列表等）
+    if (fieldConfig.default !== undefined) {
+      defaults[fieldName] = fieldConfig.default;
+    } else if (fieldConfig.fields) {
       // 嵌套对象：递归提取
       defaults[fieldName] = extractDefaults(fieldConfig.fields);
-    } else if (fieldConfig.default !== undefined) {
-      // 有默认值：直接使用
-      defaults[fieldName] = fieldConfig.default;
     } else {
       // 无默认值：根据类型推断
       if (fieldConfig.type === '$list') {
@@ -87,7 +87,10 @@ function buildPrefixedStructure(fields, defaults = {}) {
     // 检查字段本身是否需要添加前缀（支持容器对象也有 $ext 等前缀）
     const prefixedName = buildFieldWithPrefix(fieldName, fieldConfig);
 
-    if (fieldConfig.fields) {
+    // 优先使用 defaults 中明确定义的值
+    if (defaults[fieldName] !== undefined) {
+      result[prefixedName] = defaults[fieldName];
+    } else if (fieldConfig.fields) {
       // 嵌套对象：递归处理子字段
       result[prefixedName] = buildPrefixedStructure(
         fieldConfig.fields,
@@ -95,7 +98,7 @@ function buildPrefixedStructure(fields, defaults = {}) {
       );
     } else {
       // 普通字段：直接赋值
-      result[prefixedName] = defaults[fieldName] !== undefined ? defaults[fieldName] : null;
+      result[prefixedName] = null;
     }
   }
 
@@ -111,15 +114,18 @@ function buildPlainStructure(fields, defaults = {}) {
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
-    if (fieldConfig.fields) {
+    // 优先使用 defaults 中明确定义的值
+    if (defaults[fieldName] !== undefined) {
+      result[fieldName] = defaults[fieldName];
+    } else if (fieldConfig.fields) {
       // 嵌套对象：递归处理
       result[fieldName] = buildPlainStructure(
         fieldConfig.fields,
         defaults[fieldName] || {}
       );
     } else {
-      // 不添加前缀
-      result[fieldName] = defaults[fieldName] !== undefined ? defaults[fieldName] : null;
+      // 没有默认值和子字段
+      result[fieldName] = null;
     }
   }
 
