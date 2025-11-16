@@ -4,7 +4,7 @@
 
 ## extract-context.js
 
-提取 White-X 上下文信息脚本。读取本地变量并生成 XML 格式的上下文字符串。
+White-X 上下文信息提取脚本（纯 STScript 实现）。使用 STScript 读取变量并生成 XML 格式的上下文字符串。
 
 ### 功能
 
@@ -28,51 +28,40 @@
 
 ### 使用方法
 
-```bash
-# 直接运行
-node x-scripts/extract-context.js
+在 White-X 消息中或角色卡中执行以下 JavaScript 代码块：
 
-# 或使用 npm 脚本
-pnpm x:context
+```javascript
+// 复制 extract-context.js 中的代码并在 White-X 中执行
+(async () => {
+  // ... extract-context.js 的代码内容 ...
+})();
 ```
+
+或在开发环境中通过控制台执行脚本文件。
 
 ### 输出格式
 
-脚本输出 XML 格式的上下文字符串：
+脚本输出 XML 格式的上下文字符串，并保存到 `context` 变量：
 
 ```xml
 <context>
-{
-  "世界": {
-    "时间": "2024-12-16T14:30:00+0800",
-    "地点": "[北京]昌平仓库工作室"
-  },
-  "用户": {
-    "拍摄任务": [...],
-    "资金": 10000,
-    "堕落度": 0
-  },
-  "女性角色": {
-    "六花": {
-      "好感度": 0,
-      "堕落度": 0,
-      "动情程度": null,
-      "尺度": null,
-      "人设": null
-    }
-  }
-}
+{"世界":{"时间":"2024-12-16T14:30:00+0800","地点":"[北京]昌平仓库工作室"},"用户":{"拍摄任务":[...],"资金":10000,"堕落度":0},"女性角色":{"六花":{"好感度":0,"堕落度":0,"动情程度":null,"尺度":null,"人设":null}}}
 </context>
 ```
 
-### 数据加载策略
-
-脚本使用与 `src/main.js` 相同的数据加载器，遵循以下优先级：
-
-1. 优先加载生产数据（通过 STscript API，本地不可用）
-2. 回退到测试数据（`data/status-vars.debug.json`）
+脚本会：
+1. 使用 STScript 读取 `/getvar 状态栏` 获取所有数据
+2. 提取所需字段组织为结构化数据
+3. 生成 XML 格式的上下文字符串
+4. 通过 `/setvar key=context` 保存到变量中
 
 ### 依赖
 
-- Node.js 内置模块（无外部依赖）
-- 本地数据文件：`data/status-vars.debug.json`
+- STScript API（`/getvar`, `/setvar`）
+- 无外部依赖，纯原生 JavaScript
+
+### 注意事项
+
+- 脚本必须在 White-X 或支持 STScript 的环境中执行
+- 需要 `/getvar 状态栏` API 的访问权限
+- 提取的数据结构基于当前的状态栏数据格式
