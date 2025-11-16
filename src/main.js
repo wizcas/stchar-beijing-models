@@ -7,23 +7,37 @@
 import "./style.css";
 
 // 导入模块
-import { detectCharacterType, addEmojiToFieldName } from './fields.js';
+import { detectCharacterType, addEmojiToFieldName } from "./fields.js";
 import {
   loadData,
   getErrorMessage,
   getLoadingMessage,
-} from './modules/data-loader.js';
-import { CHARACTER_TYPES, DATA_LOADING } from './modules/constants.js';
+} from "./modules/data-loader.js";
+import { CHARACTER_TYPES, DATA_LOADING } from "./modules/constants.js";
 import {
   shouldShowIntimacySection,
   INTIMACY_VISIBILITY_CONFIG,
-  formatNumberWithCommas
-} from './renderer.js';
+  formatNumberWithCommas,
+} from "./renderer.js";
 
 // 导入工具模块
-import { formatCurrency, cleanFieldName, getFieldDisplayValue, processSpecialFields } from './utils/formatters.js';
-import { shouldHideField, shouldShowIntimacy, getIntimacyPlaceholder } from './utils/visibility.js';
-import { getCardTitle, getDirectFields, getSubsections, isEquipmentObject } from './utils/card-helpers.js';
+import {
+  formatCurrency,
+  cleanFieldName,
+  getFieldDisplayValue,
+  processSpecialFields,
+} from "./utils/formatters.js";
+import {
+  shouldHideField,
+  shouldShowIntimacy,
+  getIntimacyPlaceholder,
+} from "./utils/visibility.js";
+import {
+  getCardTitle,
+  getDirectFields,
+  getSubsections,
+  isEquipmentObject,
+} from "./utils/card-helpers.js";
 
 /**
  * 主状态应用
@@ -33,29 +47,34 @@ function statusApp() {
     // 状态数据
     loading: true,
     error: false,
-    errorMessage: '',
+    errorMessage: "",
     userName: null,
     userData: null,
     womanData: {},
+    worldData: null,
     taskList: [],
     taskListCollapsed: true,
+    worldDateTime: "",
+    worldWeatherColor: "text-accent-silver",
+    worldWeatherEmoji: "⛅️",
+    worldWeatherText: "",
 
     // 初始化函数
     async init() {
       try {
         this.loading = true;
         this.error = false;
-        
+
         // 加载数据
         const data = await loadData();
-        
+
         // 处理数据
         this.processData(data);
-        
+
         this.loading = false;
-        console.log('✓ Alpine.js 状态栏渲染完成');
+        console.log("✓ Alpine.js 状态栏渲染完成");
       } catch (err) {
-        console.error('✗ 初始化失败:', err);
+        console.error("✗ 初始化失败:", err);
         this.error = true;
         this.errorMessage = getErrorMessage(err);
         this.loading = false;
@@ -64,6 +83,12 @@ function statusApp() {
 
     // 处理数据
     processData(data) {
+      // 处理世界数据
+      if (data["世界"]) {
+        this.worldData = data["世界"];
+        this.formatWorldInfo();
+      }
+
       // 查找用户数据
       for (const [sectionName, sectionData] of Object.entries(data)) {
         if (typeof sectionData === "object" && sectionData !== null) {
@@ -81,8 +106,11 @@ function statusApp() {
       const womanKey = DATA_LOADING.WOMAN_SECTION_KEY;
       if (data[womanKey]) {
         const processedWomanData = {};
-        for (const [characterName, characterData] of Object.entries(data[womanKey])) {
-          processedWomanData[characterName] = this.processCharacterData(characterData);
+        for (const [characterName, characterData] of Object.entries(
+          data[womanKey],
+        )) {
+          processedWomanData[characterName] =
+            this.processCharacterData(characterData);
         }
         this.womanData = processedWomanData;
       }
@@ -94,7 +122,11 @@ function statusApp() {
 
       // 递归处理所有子对象
       for (const [key, value] of Object.entries(processed)) {
-        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        if (
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
           processed[key] = processSpecialFields(value);
         }
       }
@@ -103,12 +135,21 @@ function statusApp() {
       return processSpecialFields(processed);
     },
 
-    // 处理任务列表
+    // 处理任务列表（支持数组和对象两种格式）
     processTaskList(userData) {
       // 查找拍摄任务数据
       for (const [key, value] of Object.entries(userData)) {
-        if (key.includes('拍摄任务') && Array.isArray(value)) {
-          this.taskList = value;
+        if (key.includes("拍摄任务")) {
+          if (Array.isArray(value)) {
+            // 测试环境：数组格式
+            this.taskList = value;
+          } else if (typeof value === "object" && value !== null) {
+            // 生产环境：对象格式（用字符串索引作为键）
+            // 将对象转换为数组，按键排序
+            this.taskList = Object.keys(value)
+              .sort((a, b) => parseInt(a) - parseInt(b))
+              .map(key => value[key]);
+          }
           break;
         }
       }
@@ -116,7 +157,7 @@ function statusApp() {
 
     // 格式化数字
     formatNumber(num) {
-      if (typeof num === 'number') {
+      if (typeof num === "number") {
         return formatNumberWithCommas(num);
       }
       return num;
@@ -155,7 +196,123 @@ function statusApp() {
     // 获取性爱部分占位符文本
     getIntimacyPlaceholder() {
       return getIntimacyPlaceholder();
-    }
+    },
+
+    // 根据天气关键词判断天气类型
+    analyzeWeather(weatherText) {
+      const text = weatherText.toLowerCase();
+      
+      // 定义天气关键词和对应的颜色、emoji
+      const weatherPatterns = [
+        {
+          keywords: ['晴', '晴朗', '晴天', '阳光', '万里'],
+          color: 'text-amber-300',
+          emoji: '☀️'
+        },
+        {
+          keywords: ['雨', '下雨', '雨天', '淋雨'],
+          color: 'text-blue-400',
+          emoji: '🌧️'
+        },
+        {
+          keywords: ['雪', '下雪', '飘雪', '雪花'],
+          color: 'text-cyan-200',
+          emoji: '❄️'
+        },
+        {
+          keywords: ['云', '阴', '阴沉', '乌云', '多云'],
+          color: 'text-gray-300',
+          emoji: '☁️'
+        },
+        {
+          keywords: ['暴雨', '大雨', '暴风', '雷电', '闪电'],
+          color: 'text-blue-600',
+          emoji: '⛈️'
+        },
+        {
+          keywords: ['雾', '雾霾', '朦胧'],
+          color: 'text-gray-400',
+          emoji: '🌫️'
+        },
+        {
+          keywords: ['热', '炎热', '酷热', '烈日'],
+          color: 'text-red-400',
+          emoji: '🔥'
+        },
+        {
+          keywords: ['冷', '寒冷', '冰冷', '刺骨'],
+          color: 'text-blue-300',
+          emoji: '❄️'
+        },
+        {
+          keywords: ['温暖', '舒适', '宜人'],
+          color: 'text-green-300',
+          emoji: '🌤️'
+        },
+        {
+          keywords: ['风', '有风', '微风', '大风'],
+          color: 'text-purple-300',
+          emoji: '💨'
+        }
+      ];
+
+      // 匹配关键词，返回第一个匹配的结果
+      for (const pattern of weatherPatterns) {
+        if (pattern.keywords.some(keyword => text.includes(keyword))) {
+          return pattern;
+        }
+      }
+
+      // 默认值
+      return {
+        color: 'text-accent-silver',
+        emoji: '⛅️'
+      };
+    },
+
+    // 格式化世界信息显示
+    formatWorldInfo() {
+      if (!this.worldData) return;
+
+      const { 时间, 地点, 天气 } = this.worldData;
+      if (!时间 || !地点 || !天气) return;
+
+      // 解析ISO8601时间格式
+      const dateObj = new Date(时间);
+
+      // 检查是否为有效日期
+      if (isNaN(dateObj.getTime())) return;
+
+      // 格式化日期和时间
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const date = String(dateObj.getDate()).padStart(2, "0");
+      const hours = String(dateObj.getHours()).padStart(2, "0");
+      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+
+      // 获取星期
+      const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+      const weekDay = weekDays[dateObj.getDay()];
+
+      // 检查时区（是否不在中国）
+      // 中国时区是+0800，如果时间戳中不同则显示时区
+      const timezoneStr = 时间.includes("+")
+        ? 时间.match(/([+-]\d{2}):?(\d{2})$/)?.[0]
+        : null;
+      const isChinaTimezone =
+        !timezoneStr || timezoneStr === "+08:00" || timezoneStr === "+0800";
+      const timezoneDisplay =
+        !isChinaTimezone && timezoneStr ? ` (${timezoneStr})` : "";
+
+      // 分别生成日期时间和位置信息，天气单独一行
+      this.worldDateTime = `📅 ${year}-${month}-${date} 星期${weekDay} ${hours}:${minutes}${timezoneDisplay} 📍 ${地点}`;
+      
+      // 根据天气内容分析并应用颜色和emoji
+      const weatherAnalysis = this.analyzeWeather(天气);
+      this.worldWeatherColor = weatherAnalysis.color;
+      this.worldWeatherEmoji = weatherAnalysis.emoji;
+      this.worldWeatherText = 天气;
+    },
   };
 }
 
@@ -207,7 +364,7 @@ function characterCard(characterData, characterName, characterType) {
     },
 
     // 检查字段是否应该隐藏
-    shouldHideField(fieldName, sectionName = '') {
+    shouldHideField(fieldName, sectionName = "") {
       return shouldHideField(fieldName, sectionName);
     },
 
@@ -231,7 +388,7 @@ function characterCard(characterData, characterName, characterType) {
           >
             <h2 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${this.getCardTitle()}</h2>
             <span
-              class="text-accent-silver text-lg font-bold transition-transform duration-200 ease-in-out"
+              class="text-accent-silver text-xs font-bold transition-transform duration-200 ease-in-out"
               :class="collapsed ? 'rotate-45' : 'rotate-0'"
             >✕</span>
           </div>
@@ -258,16 +415,19 @@ function characterCard(characterData, characterName, characterType) {
     // 渲染直接字段
     renderDirectFields() {
       const fields = this.getDirectFields();
-      return Object.entries(fields).map(([fieldName, value]) => {
-        if (this.shouldHideField(fieldName)) return '';
+      return Object.entries(fields)
+        .map(([fieldName, value]) => {
+          if (this.shouldHideField(fieldName)) return "";
 
-        const cleanName = this.cleanFieldName(fieldName);
-        const displayValue = this.getFieldDisplayValue(fieldName, value);
-        const label = this.addEmoji(cleanName);
+          const cleanName = this.cleanFieldName(fieldName);
+          const displayValue = this.getFieldDisplayValue(fieldName, value);
+          const label = this.addEmoji(cleanName);
 
-        if (Array.isArray(value)) {
-          const tags = value.map(item => `<span class="tag-base">${item}</span>`).join('');
-          return `
+          if (Array.isArray(value)) {
+            const tags = value
+              .map((item) => `<span class="tag-base">${item}</span>`)
+              .join("");
+            return `
             <div class="field-container">
               <div class="field-label">${label}:</div>
               <div class="field-value">
@@ -275,42 +435,49 @@ function characterCard(characterData, characterName, characterType) {
               </div>
             </div>
           `;
-        } else {
-          // 检查是否包含HTML标签（如想法字段的<em>）
-          const isHtml = typeof displayValue === 'string' && displayValue.includes('<');
-          return `
+          } else {
+            // 检查是否包含HTML标签（如想法字段的<em>）
+            const isHtml =
+              typeof displayValue === "string" && displayValue.includes("<");
+            return `
             <div class="field-container">
               <div class="field-label">${label}:</div>
               <div class="field-value">${displayValue}</div>
             </div>
           `;
-        }
-      }).join('');
+          }
+        })
+        .join("");
     },
 
     // 渲染器材卡片
     renderEquipmentCards() {
       const subsections = this.getSubsections();
-      return Object.entries(subsections).map(([sectionName, sectionData]) => {
-        if (!this.isEquipmentObject(sectionData)) return '';
+      return Object.entries(subsections)
+        .map(([sectionName, sectionData]) => {
+          if (!this.isEquipmentObject(sectionData)) return "";
 
-        const cleanName = this.cleanFieldName(sectionName);
-        const title = this.addEmoji(cleanName);
-        const categories = Object.entries(sectionData).map(([categoryName, items]) => {
-          const cleanCategoryName = this.cleanFieldName(categoryName);
-          const categoryTitle = this.addEmoji(cleanCategoryName);
-          const isOther = cleanCategoryName === '其他';
-          const tags = items.map(item => `<span class="tag-base">${item}</span>`).join('');
+          const cleanName = this.cleanFieldName(sectionName);
+          const title = this.addEmoji(cleanName);
+          const categories = Object.entries(sectionData)
+            .map(([categoryName, items]) => {
+              const cleanCategoryName = this.cleanFieldName(categoryName);
+              const categoryTitle = this.addEmoji(cleanCategoryName);
+              const isOther = cleanCategoryName === "其他";
+              const tags = items
+                .map((item) => `<span class="tag-base">${item}</span>`)
+                .join("");
 
-          return `
-            <div class="bg-gradient-to-br from-surface-secondary to-surface-accent border border-border-subtle p-2.5 rounded-[var(--radius-element)] ${isOther ? 'lg:col-span-2' : ''}">
+              return `
+            <div class="bg-gradient-to-br from-surface-secondary to-surface-accent border border-border-subtle p-2.5 rounded-[var(--radius-element)] ${isOther ? "lg:col-span-2" : ""}">
               <div class="text-accent-red font-semibold mb-2 text-sm tracking-wide uppercase">${categoryTitle}</div>
               <div class="tag-container">${tags}</div>
             </div>
           `;
-        }).join('');
+            })
+            .join("");
 
-        return `
+          return `
           <div class="bg-surface-primary border border-border-subtle rounded-[var(--radius-card)] shadow-[var(--shadow-card)] mt-3">
             <div
               class="flex items-center justify-between cursor-pointer select-none p-3 rounded-[var(--radius-element)] hover:bg-surface-black transition-colors duration-200"
@@ -318,7 +485,7 @@ function characterCard(characterData, characterName, characterType) {
             >
               <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
               <span
-                class="text-accent-silver text-lg font-bold transition-transform duration-200 ease-in-out"
+                class="text-accent-silver text-xs font-bold transition-transform duration-200 ease-in-out"
                 :class="equipmentCollapsed ? 'rotate-45' : 'rotate-0'"
               >✕</span>
             </div>
@@ -336,25 +503,27 @@ function characterCard(characterData, characterName, characterType) {
             </div>
           </div>
         `;
-      }).join('');
+        })
+        .join("");
     },
 
     // 渲染子部分
     renderSubsections() {
       const subsections = this.getSubsections();
-      const nonEquipmentSections = Object.entries(subsections).filter(([_, sectionData]) =>
-        !this.isEquipmentObject(sectionData)
+      const nonEquipmentSections = Object.entries(subsections).filter(
+        ([_, sectionData]) => !this.isEquipmentObject(sectionData),
       );
 
-      if (nonEquipmentSections.length === 0) return '';
+      if (nonEquipmentSections.length === 0) return "";
 
-      const sections = nonEquipmentSections.map(([sectionName, sectionData]) => {
-        const cleanName = this.cleanFieldName(sectionName);
-        const title = this.addEmoji(cleanName);
+      const sections = nonEquipmentSections
+        .map(([sectionName, sectionData]) => {
+          const cleanName = this.cleanFieldName(sectionName);
+          const title = this.addEmoji(cleanName);
 
-        // 性爱部分特殊处理
-        if (cleanName === '性爱' && !this.shouldShowIntimacy()) {
-          return `
+          // 性爱部分特殊处理
+          if (cleanName === "性爱" && !this.shouldShowIntimacy()) {
+            return `
             <div class="masonry-item">
               <div class="bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
                 <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
@@ -362,19 +531,27 @@ function characterCard(characterData, characterName, characterType) {
               </div>
             </div>
           `;
-        }
+          }
 
-        // 普通子部分
-        const fields = Object.entries(sectionData).map(([fieldName, value]) => {
-          if (this.shouldHideField(fieldName, cleanName)) return '';
+          // 普通子部分
+          const fields = Object.entries(sectionData)
+            .map(([fieldName, value]) => {
+              if (this.shouldHideField(fieldName, cleanName)) return "";
 
-          const cleanFieldName = this.cleanFieldName(fieldName);
-          const fieldLabel = this.addEmoji(cleanFieldName);
-          const displayValue = getFieldDisplayValue(fieldName, value, this.data, sectionData);
+              const cleanFieldName = this.cleanFieldName(fieldName);
+              const fieldLabel = this.addEmoji(cleanFieldName);
+              const displayValue = getFieldDisplayValue(
+                fieldName,
+                value,
+                this.data,
+                sectionData,
+              );
 
-          if (Array.isArray(value)) {
-            const tags = value.map(item => `<span class="tag-base">${item}</span>`).join('');
-            return `
+              if (Array.isArray(value)) {
+                const tags = value
+                  .map((item) => `<span class="tag-base">${item}</span>`)
+                  .join("");
+                return `
               <div class="field-container">
                 <div class="field-label">${fieldLabel}:</div>
                 <div class="field-value">
@@ -382,17 +559,18 @@ function characterCard(characterData, characterName, characterType) {
                 </div>
               </div>
             `;
-          } else {
-            return `
+              } else {
+                return `
               <div class="field-container">
                 <div class="field-label">${fieldLabel}:</div>
                 <div class="field-value">${displayValue}</div>
               </div>
             `;
-          }
-        }).join('');
+              }
+            })
+            .join("");
 
-        return `
+          return `
           <div class="masonry-item">
             <div class="bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
               <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
@@ -400,10 +578,11 @@ function characterCard(characterData, characterName, characterType) {
             </div>
           </div>
         `;
-      }).join('');
+        })
+        .join("");
 
       return `<div class="masonry-grid mt-3">${sections}</div>`;
-    }
+    },
   };
 }
 

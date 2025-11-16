@@ -72,7 +72,11 @@ export function getSubsections(data) {
   const subsections = {};
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      subsections[key] = value;
+      // 过滤掉拍摄任务字段（因为它已经是独立的卡片了）
+      const cleanKey = cleanFieldName(key);
+      if (cleanKey !== "拍摄任务") {
+        subsections[key] = value;
+      }
     }
   }
   return subsections;

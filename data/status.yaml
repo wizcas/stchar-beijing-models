@@ -2,6 +2,22 @@
 # 该文件定义所有支持的字段及其类型约束
 # 生成时会与 status.json 合并，产生完整的初始化数据
 
+世界:
+  description: "当前世界状态（时间、地点、天气）"
+  fields:
+    时间:
+      type: "string"
+      description: "ISO8601格式的日期和时间，包含时区信息"
+      default: "2024-12-16T14:30:00+0800"
+    地点:
+      type: "string"
+      description: "当前地点，格式为 [国家/城市]具体位置"
+      default: "[北京]昌平仓库工作室"
+    天气:
+      type: "string"
+      description: "当地的户外和环境天气描述，使用自然语言简略表述"
+      default: "天色阴沉，空气寒冷刺鼻，但屋内的暖气把脸烤得红通通的。"
+
 "{{user}}":
   description: "玩家角色"
   fields:
@@ -26,7 +42,12 @@
       default: 10000
     拍摄任务:
       type: "$list"
-      default: []
+      default:
+        - 目标: ""
+          报酬: ""
+          模特: ""
+          期限: ""
+          特殊要求: ""
     器材:
       type: "object"
       fields:

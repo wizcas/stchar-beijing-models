@@ -307,10 +307,97 @@
     @apply text-accent-cyan;
   }
 
-  /* 可折叠卡片内容容器 - 使用 grid 1fr/0fr 进行平滑展开/收缩 */
-  .collapsible-content {
-    display: grid;
-    overflow: hidden;
-    transition: grid-template-rows 200ms ease-in-out;
-  }
+   /* 可折叠卡片内容容器 - 使用 grid 1fr/0fr 进行平滑展开/收缩 */
+   .collapsible-content {
+     display: grid;
+     overflow: hidden;
+     transition: grid-template-rows 200ms ease-in-out;
+   }
+
+   /* 任务胶片卡片 - 模拟电影胶片风格 */
+   .task-filmstrip-card {
+     @apply relative bg-surface-secondary border-2 border-border-accent rounded-sm p-3 shadow-element break-inside-avoid;
+     background: linear-gradient(
+       135deg,
+       var(--color-surface-accent) 0%,
+       var(--color-surface-secondary) 50%,
+       var(--color-surface-accent) 100%
+     );
+     background-size: 200% 200%;
+     animation: filmstripShine 3s ease-in-out infinite;
+     /* 胶片打孔效果 - 左右两侧 */
+     border-left: 8px solid var(--color-surface-black);
+     border-right: 8px solid var(--color-surface-black);
+     padding-left: 16px;
+     padding-right: 16px;
+     position: relative;
+   }
+
+   /* 胶片打孔视觉效果 */
+   .task-filmstrip-card::before,
+   .task-filmstrip-card::after {
+     content: "";
+     position: absolute;
+     width: 6px;
+     top: 0;
+     bottom: 0;
+     background-image: repeating-linear-gradient(
+       to bottom,
+       var(--color-surface-black) 0px,
+       var(--color-surface-black) 3px,
+       transparent 3px,
+       transparent 8px
+     );
+   }
+
+   .task-filmstrip-card::before {
+     left: 2px;
+   }
+
+   .task-filmstrip-card::after {
+     right: 2px;
+   }
+
+   /* 电影胶片闪光动画 */
+   @keyframes filmstripShine {
+     0% {
+       background-position: 0% 50%;
+     }
+     50% {
+       background-position: 100% 50%;
+     }
+     100% {
+       background-position: 0% 50%;
+     }
+   }
+
+   /* 任务卡片内字段容器样式调整 */
+   .task-filmstrip-card .field-container {
+     @apply py-2;
+   }
+
+   .task-filmstrip-card .field-container:last-child {
+     @apply border-b-0;
+   }
+
+   /* 任务卡片的标签样式 */
+   .task-filmstrip-card .tag-base {
+     @apply bg-surface-primary hover:bg-surface-accent;
+   }
+
+   /* 移动端任务卡片样式 */
+   @media (max-width: 767px) {
+     .task-filmstrip-card {
+       @apply p-2;
+       padding-left: 12px;
+       padding-right: 12px;
+       border-left-width: 6px;
+       border-right-width: 6px;
+     }
+
+     .task-filmstrip-card::before,
+     .task-filmstrip-card::after {
+       width: 4px;
+     }
+   }
 }

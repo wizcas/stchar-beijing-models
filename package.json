@@ -10,7 +10,9 @@
     "config:verify": "node verify-config.js",
     "analyze:tokens": "node analyze-tokens.js",
     "analyze:tokens:verbose": "node analyze-tokens.js --verbose",
-    "analyze:tokens:json": "node analyze-tokens.js --format json"
+    "analyze:tokens:json": "node analyze-tokens.js --format json",
+    "copy:status": "node copy-status.js",
+    "copy:html": "pnpm build:prod && node copy-html.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
