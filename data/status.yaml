@@ -92,6 +92,7 @@
             - "Dell Inspiron 16 Plus 笔记本电脑"
 
 女人:
+  type: "$ext"
   description: "女性角色数据"
   fields:
     六花:
