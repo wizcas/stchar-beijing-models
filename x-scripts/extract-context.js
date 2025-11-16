@@ -121,13 +121,13 @@ ${jsonString}
 </context>`;
 
     console.log('✓ 上下文提取成功');
-    console.log('\n上下文内容:');
-    console.log(context);
+    console.log('\n📋 上下文内容（格式化 JSON）:');
+    console.log(JSON.stringify(contextData, null, 2));
     
-    // 设置变量并保存到 STscript
-    console.log('\n📤 保存上下文到 STscript 变量...');
-    await STscript(`/setvar key=context ${JSON.stringify(context)}`);
-    console.log('✓ 变量保存成功');
+    // 注入消息到对话
+    console.log('\n📤 注入上下文到对话...');
+    await STscript(`/inject position=after depth=-1 scan=true role=user ephemeral=true ${context}`);
+    console.log('✓ 上下文注入成功');
     
   } catch (error) {
     console.error('❌ 错误:', error.message);
