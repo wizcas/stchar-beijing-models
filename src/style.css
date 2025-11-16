@@ -309,6 +309,7 @@
 
   /* 可折叠卡片内容容器 - 使用 grid 1fr/0fr 进行平滑展开/收缩 */
   .collapsible-content {
+    display: grid;
     overflow: hidden;
     transition: grid-template-rows 200ms ease-in-out;
   }

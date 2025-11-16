@@ -16,7 +16,7 @@ try {
   if (fs.existsSync(targetFile)) {
     fs.unlinkSync(targetFile);
   }
-  
+
   fs.symlinkSync(sourceFile, targetFile);
   console.log(`✅ Created symlink: ${targetFile} -> ${sourceFile}`);
 } catch (error) {

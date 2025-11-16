@@ -22,23 +22,93 @@
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
+    <!-- Alpine.js CDN - 移除defer，让它在我们的脚本之后加载 -->
+
     <!-- Tailwind CSS 配置 (由 build.js 生成) -->
     <!-- TAILWIND_CONFIG -->
 
     <!-- CSS_PLACEHOLDER -->
   </head>
-  <body>
+  <body x-data="statusApp()" x-init="init()">
+
+
     <div class="max-w-[1400px] mx-auto md:p-3">
       <!-- 页面标题 -->
       <header class="text-center mb-3 mt-2">
         <h1 class="page-title">
-          <span class="title-user">{{user}}</span>
+          <span class="title-user" x-text="userName || '{{user}}'"></span>
           <span class="title-text">摄影工作室</span>
         </h1>
       </header>
 
-      <div id="status-display" class="flex flex-col gap-3"></div>
+      <!-- 加载状态 -->
+      <div x-show="loading" class="text-center py-8 text-text-muted">
+        正在加载状态数据...
+      </div>
+
+      <!-- 错误状态 -->
+      <div x-show="error" class="text-center py-8 text-accent-red" x-text="errorMessage"></div>
+
+      <!-- 主要内容 -->
+      <div x-show="!loading && !error" class="flex flex-col gap-3">
+        <!-- 任务列表卡片 -->
+        <template x-if="taskList && taskList.length > 0">
+          <div class="bg-surface-primary border border-border-subtle rounded-[var(--radius-card)] shadow-[var(--shadow-card)]">
+            <div
+              class="flex items-center justify-between cursor-pointer select-none p-3 rounded-[var(--radius-element)] hover:bg-surface-black transition-colors duration-200"
+              @click="taskListCollapsed = !taskListCollapsed"
+            >
+              <h2 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">
+                📋 拍摄任务 (<span x-text="taskList.length"></span>)
+              </h2>
+              <span
+                class="text-accent-silver text-lg font-bold transition-transform duration-200 ease-in-out"
+                :class="taskListCollapsed ? 'rotate-45' : 'rotate-0'"
+              >✕</span>
+            </div>
+            <div
+              class="collapsible-content"
+              :style="taskListCollapsed ? 'grid-template-rows: 0fr' : 'grid-template-rows: 1fr'"
+            >
+              <div class="min-h-0 overflow-hidden">
+                <div class="flex flex-col gap-2.5 p-3">
+                  <template x-for="(task, index) in taskList" :key="'task-' + index">
+                    <div class="field-container">
+                      <div class="field-label" x-text="index + ':'"></div>
+                      <div class="field-value">
+                        <template x-for="(value, key) in task" :key="'task-' + index + '-' + key">
+                          <div class="field-container">
+                            <div class="field-label" x-text="key + ':'"></div>
+                            <div class="field-value" x-text="value"></div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 角色卡片容器 -->
+        <div id="character-cards">
+          <!-- 用户卡片 -->
+          <template x-if="userData">
+            <div x-data="characterCard(userData, userName, 'user')" x-html="renderCharacterCard()"></div>
+          </template>
+
+          <!-- 女性角色卡片 -->
+          <template x-for="(characterData, characterName) in womanData" :key="characterName">
+            <div x-data="characterCard(characterData, characterName, 'woman')" x-html="renderCharacterCard()"></div>
+          </template>
+        </div>
+      </div>
     </div>
+
     <!-- JS_PLACEHOLDER -->
+
+    <!-- Alpine.js 在我们的脚本之后加载 -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   </body>
 </html>

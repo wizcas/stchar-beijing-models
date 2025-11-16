@@ -1,292 +1,412 @@
 /**
- * 主应用程序模块
- * 负责页面初始化和数据渲染
+ * Alpine.js 主应用程序模块
+ * 负责页面初始化和数据管理
  */
 
 // 引入CSS
 import "./style.css";
 
 // 导入模块
-import { CSS_CLASSES } from "./css-constants.js";
-import { detectCharacterType } from "./fields.js";
-import {
-  createDiv,
-  createCollapsibleCard,
-  createWomanCardScrollContainer,
-  generateCardTitle,
-  renderObject,
-} from "./renderer.js";
+import { detectCharacterType, addEmojiToFieldName } from './fields.js';
 import {
   loadData,
   getErrorMessage,
   getLoadingMessage,
-} from "./modules/data-loader.js";
+} from './modules/data-loader.js';
+import { CHARACTER_TYPES, DATA_LOADING } from './modules/constants.js';
 import {
-  CHARACTER_TYPES,
-  DATA_LOADING,
-  ELEMENT_IDS,
-} from "./modules/constants.js";
+  shouldShowIntimacySection,
+  INTIMACY_VISIBILITY_CONFIG,
+  formatNumberWithCommas
+} from './renderer.js';
+
+// 导入工具模块
+import { formatCurrency, cleanFieldName, getFieldDisplayValue, processSpecialFields } from './utils/formatters.js';
+import { shouldHideField, shouldShowIntimacy, getIntimacyPlaceholder } from './utils/visibility.js';
+import { getCardTitle, getDirectFields, getSubsections, isEquipmentObject } from './utils/card-helpers.js';
 
 /**
- * @typedef {Object} CharacterData
- * @description 角色数据对象
+ * 主状态应用
  */
+function statusApp() {
+  return {
+    // 状态数据
+    loading: true,
+    error: false,
+    errorMessage: '',
+    userName: null,
+    userData: null,
+    womanData: {},
+    taskList: [],
+    taskListCollapsed: true,
 
-/**
- * @typedef {Object} StatusBarData
- * @description 状态栏数据，包含各个角色的信息
- */
-
-/**
- * 渲染单个角色卡片
- * @param {string} sectionName - 角色/分类的名称
- * @param {CharacterData} sectionData - 角色的数据对象
- * @param {HTMLElement} container - 目标容器元素
- * @returns {void}
- */
-function renderCharacterSection(sectionName, sectionData, container) {
-  const characterType = detectCharacterType(sectionName, sectionData);
-  const cardTitle = generateCardTitle(sectionName, sectionData);
-
-  // 创建内容容器
-  const contentContainer = createDiv(CSS_CLASSES.CHARACTER_CONTENT);
-
-  // 渲染对象内容
-  renderObject(sectionData, contentContainer, sectionName, 0);
-
-  // 根据角色类型决定是否使用滚动容器
-  let finalContent;
-  if (
-    characterType === CHARACTER_TYPES.WOMAN ||
-    characterType === CHARACTER_TYPES.USER
-  ) {
-    finalContent = createWomanCardScrollContainer(contentContainer);
-  } else {
-    finalContent = contentContainer;
-  }
-
-  // 创建可折叠卡片 - 所有卡片默认折叠
-  const initiallyCollapsed = true;
-
-  const cardStyles = {
-    cardClass: CSS_CLASSES.CHARACTER_CARD,
-    titleClass: CSS_CLASSES.SECTION_TITLE,
-    useRawTitle: true,
-  };
-
-  const collapsibleCard = createCollapsibleCard(
-    cardTitle,
-    finalContent,
-    initiallyCollapsed,
-    cardStyles,
-  );
-
-  container.appendChild(collapsibleCard);
-}
-
-/**
- * 处理嵌套的女性角色数据结构
- * @param {Object} womanSection - 女性角色数据对象
- * @returns {Object} 处理后的女性角色数据
- */
-function processWomanData(womanSection) {
-  const processedData = {};
-
-  for (const [characterName, characterData] of Object.entries(womanSection)) {
-    // 每个女性角色作为独立的卡片
-    processedData[characterName] = characterData;
-  }
-
-  return processedData;
-}
-
-/**
- * 更新页面标题中的用户占位符
- * @param {string|null} userName - 用户名称
- * @returns {void}
- */
-function updatePageTitle(userName) {
-  const titleUserElement = document.querySelector(ELEMENT_IDS.TITLE_USER);
-  if (titleUserElement) {
-    titleUserElement.textContent = userName || "{{user}}";
-  }
-}
-
-/**
- * 设置容器加载状态
- * @param {HTMLElement} container - 容器元素
- * @returns {void}
- */
-function setLoadingState(container) {
-  container.innerHTML = `<div class="loading">${getLoadingMessage()}</div>`;
-}
-
-/**
- * 设置容器错误状态
- * @param {HTMLElement} container - 容器元素
- * @param {Error|string} error - 错误对象或错误消息
- * @returns {void}
- */
-function setErrorState(container, error) {
-  container.innerHTML = `<div class="error">${getErrorMessage(error)}</div>`;
-}
-
-/**
- * 从数据对象中查找用户角色名称
- * @param {StatusBarData} data - 状态栏数据
- * @returns {string|null} 用户名称或 null
- */
-function findUserName(data) {
-  for (const [sectionName, sectionData] of Object.entries(data)) {
-    if (typeof sectionData === "object" && sectionData !== null) {
-      const characterType = detectCharacterType(sectionName, sectionData);
-      if (characterType === CHARACTER_TYPES.USER) {
-        return sectionName;
+    // 初始化函数
+    async init() {
+      try {
+        this.loading = true;
+        this.error = false;
+        
+        // 加载数据
+        const data = await loadData();
+        
+        // 处理数据
+        this.processData(data);
+        
+        this.loading = false;
+        console.log('✓ Alpine.js 状态栏渲染完成');
+      } catch (err) {
+        console.error('✗ 初始化失败:', err);
+        this.error = true;
+        this.errorMessage = getErrorMessage(err);
+        this.loading = false;
       }
-    }
-  }
-  return null;
-}
+    },
 
-/**
- * 从数据对象中查找用户角色数据
- * @param {StatusBarData} data - 状态栏数据
- * @returns {Object|null} 用户数据对象或 null
- */
-function findUserData(data) {
-  for (const [sectionName, sectionData] of Object.entries(data)) {
-    if (typeof sectionData === "object" && sectionData !== null) {
-      const characterType = detectCharacterType(sectionName, sectionData);
-      if (characterType === CHARACTER_TYPES.USER) {
-        return sectionData;
-      }
-    }
-  }
-  return null;
-}
+    // 处理数据
+    processData(data) {
+      // 查找用户数据
+      for (const [sectionName, sectionData] of Object.entries(data)) {
+        if (typeof sectionData === "object" && sectionData !== null) {
+          const characterType = detectCharacterType(sectionName, sectionData);
 
-/**
- * 渲染任务列表卡片
- * @param {Object} userData - 用户数据对象
- * @param {HTMLElement} container - 目标容器元素
- * @returns {void}
- */
-function renderTaskListCard(userData, container) {
-  // 查找拍摄任务数据
-  let taskListData = null;
-  for (const [key, value] of Object.entries(userData)) {
-    if (key.includes("拍摄任务")) {
-      taskListData = value;
-      break;
-    }
-  }
-
-  if (!taskListData || !Array.isArray(taskListData)) {
-    return; // 没有任务数据或数据格式不正确
-  }
-
-  // 将数组转换为对象格式，使用下标作为key
-  const taskObject = {};
-  taskListData.forEach((task, index) => {
-    taskObject[index] = task;
-  });
-  console.log({ taskListData, taskObject });
-
-  // 创建任务列表卡片标题
-  const taskCount = taskListData.length;
-  const cardTitle = `📋 拍摄任务 (${taskCount})`;
-
-  // 创建内容容器
-  const contentContainer = createDiv(CSS_CLASSES.CHARACTER_CONTENT);
-
-  // 渲染任务对象
-  renderObject(taskObject, contentContainer, "拍摄任务", 0);
-
-  // 创建可折叠卡片
-  const cardStyles = {
-    cardClass: CSS_CLASSES.CHARACTER_CARD,
-    titleClass: CSS_CLASSES.SECTION_TITLE,
-    useRawTitle: true,
-  };
-
-  const collapsibleCard = createCollapsibleCard(
-    cardTitle,
-    contentContainer,
-    true, // 默认折叠
-    cardStyles,
-  );
-
-  container.appendChild(collapsibleCard);
-}
-
-/**
- * 渲染所有角色部分
- * @param {StatusBarData} data - 状态栏数据
- * @param {HTMLElement} container - 目标容器元素
- * @returns {void}
- */
-function renderAllCharacterSections(data, container) {
-  for (const [sectionName, sectionData] of Object.entries(data)) {
-    if (typeof sectionData === "object" && sectionData !== null) {
-      const womanKey = DATA_LOADING.WOMAN_SECTION_KEY;
-      if (sectionName === womanKey) {
-        // 特殊处理女性角色数据结构 - 每个女性角色作为独立卡片
-        const womanData = processWomanData(sectionData);
-        for (const [characterName, characterData] of Object.entries(
-          womanData,
-        )) {
-          renderCharacterSection(characterName, characterData, container);
+          if (characterType === CHARACTER_TYPES.USER) {
+            this.userName = sectionName;
+            this.userData = this.processCharacterData(sectionData);
+            this.processTaskList(this.userData);
+          }
         }
-      } else {
-        // 其他角色（如用户）直接渲染
-        renderCharacterSection(sectionName, sectionData, container);
       }
+
+      // 处理女性角色数据
+      const womanKey = DATA_LOADING.WOMAN_SECTION_KEY;
+      if (data[womanKey]) {
+        const processedWomanData = {};
+        for (const [characterName, characterData] of Object.entries(data[womanKey])) {
+          processedWomanData[characterName] = this.processCharacterData(characterData);
+        }
+        this.womanData = processedWomanData;
+      }
+    },
+
+    // 处理角色数据，应用特殊字段处理
+    processCharacterData(characterData) {
+      const processed = { ...characterData };
+
+      // 递归处理所有子对象
+      for (const [key, value] of Object.entries(processed)) {
+        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+          processed[key] = processSpecialFields(value);
+        }
+      }
+
+      // 处理根级别的特殊字段
+      return processSpecialFields(processed);
+    },
+
+    // 处理任务列表
+    processTaskList(userData) {
+      // 查找拍摄任务数据
+      for (const [key, value] of Object.entries(userData)) {
+        if (key.includes('拍摄任务') && Array.isArray(value)) {
+          this.taskList = value;
+          break;
+        }
+      }
+    },
+
+    // 格式化数字
+    formatNumber(num) {
+      if (typeof num === 'number') {
+        return formatNumberWithCommas(num);
+      }
+      return num;
+    },
+
+    // 添加emoji到字段名
+    addEmoji(fieldName) {
+      return addEmojiToFieldName(fieldName);
+    },
+
+    // 格式化资金
+    formatCurrency(num) {
+      return formatCurrency(num);
+    },
+
+    // 清理字段名（移除类型前缀）
+    cleanFieldName(fieldName) {
+      return cleanFieldName(fieldName);
+    },
+
+    // 检查字段是否应该隐藏
+    shouldHideField(fieldName, sectionName) {
+      return shouldHideField(fieldName, sectionName);
+    },
+
+    // 获取字段显示值
+    getFieldDisplayValue(fieldName, value, parentData) {
+      return getFieldDisplayValue(fieldName, value, parentData);
+    },
+
+    // 检查性爱部分是否可见
+    shouldShowIntimacy(characterData) {
+      return shouldShowIntimacy(characterData);
+    },
+
+    // 获取性爱部分占位符文本
+    getIntimacyPlaceholder() {
+      return getIntimacyPlaceholder();
     }
-  }
+  };
 }
 
 /**
- * 初始化页面 - 加载数据并渲染
- * @async
- * @returns {Promise<void>}
+ * 角色卡片组件
  */
-async function init() {
-  const container = document.getElementById(ELEMENT_IDS.STATUS_DISPLAY);
+function characterCard(characterData, characterName, characterType) {
+  return {
+    data: characterData,
+    name: characterName,
+    type: characterType,
+    collapsed: true,
+    equipmentCollapsed: true,
 
-  if (!container) {
-    console.error("找不到状态显示容器");
-    return;
-  }
+    // 获取卡片标题
+    getCardTitle() {
+      return getCardTitle(this.name, this.type, this.data);
+    },
 
-  try {
-    // 显示加载状态
-    setLoadingState(container);
+    // 清理字段名
+    cleanFieldName(fieldName) {
+      const match = fieldName.match(/^\$[^\s]*\s+(.+)$/);
+      return match ? match[1] : fieldName;
+    },
 
-    // 加载数据
-    const data = await loadData();
+    // 添加emoji到字段名
+    addEmoji(fieldName) {
+      return addEmojiToFieldName(fieldName);
+    },
 
-    // 清空容器
-    container.innerHTML = "";
+    // 获取直接字段
+    getDirectFields() {
+      return getDirectFields(this.data);
+    },
 
-    // 查找用户名并更新标题
-    const userName = findUserName(data);
-    updatePageTitle(userName);
+    // 获取子部分
+    getSubsections() {
+      return getSubsections(this.data);
+    },
 
-    // 查找用户数据并渲染任务列表卡片
-    const userData = findUserData(data);
-    if (userData) {
-      renderTaskListCard(userData, container);
+    // 检查是否为器材对象
+    isEquipmentObject(obj) {
+      return isEquipmentObject(obj);
+    },
+
+    // 获取字段显示值
+    getFieldDisplayValue(fieldName, value, sectionData = null) {
+      return getFieldDisplayValue(fieldName, value, this.data, sectionData);
+    },
+
+    // 检查字段是否应该隐藏
+    shouldHideField(fieldName, sectionName = '') {
+      return shouldHideField(fieldName, sectionName);
+    },
+
+    // 检查性爱部分是否可见
+    shouldShowIntimacy() {
+      return shouldShowIntimacy(this.data);
+    },
+
+    // 获取性爱部分占位符文本
+    getIntimacyPlaceholder() {
+      return getIntimacyPlaceholder();
+    },
+
+    // 渲染角色卡片HTML
+    renderCharacterCard() {
+      return `
+        <div class="bg-surface-primary border border-border-subtle rounded-[var(--radius-card)] shadow-[var(--shadow-card)]">
+          <div
+            class="flex items-center justify-between cursor-pointer select-none p-3 rounded-[var(--radius-element)] hover:bg-surface-black transition-colors duration-200"
+            @click="collapsed = !collapsed"
+          >
+            <h2 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${this.getCardTitle()}</h2>
+            <span
+              class="text-accent-silver text-lg font-bold transition-transform duration-200 ease-in-out"
+              :class="collapsed ? 'rotate-45' : 'rotate-0'"
+            >✕</span>
+          </div>
+          <div
+            class="collapsible-content"
+            :style="collapsed ? 'grid-template-rows: 0fr' : 'grid-template-rows: 1fr'"
+          >
+            <div class="min-h-0 overflow-hidden">
+              <div class="woman-card-scroll-container">
+                <div class="woman-card-content">
+                  <div class="flex flex-col gap-2.5 p-3">
+                    ${this.renderDirectFields()}
+                    ${this.renderEquipmentCards()}
+                    ${this.renderSubsections()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    },
+
+    // 渲染直接字段
+    renderDirectFields() {
+      const fields = this.getDirectFields();
+      return Object.entries(fields).map(([fieldName, value]) => {
+        if (this.shouldHideField(fieldName)) return '';
+
+        const cleanName = this.cleanFieldName(fieldName);
+        const displayValue = this.getFieldDisplayValue(fieldName, value);
+        const label = this.addEmoji(cleanName);
+
+        if (Array.isArray(value)) {
+          const tags = value.map(item => `<span class="tag-base">${item}</span>`).join('');
+          return `
+            <div class="field-container">
+              <div class="field-label">${label}:</div>
+              <div class="field-value">
+                <div class="tag-container">${tags}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          // 检查是否包含HTML标签（如想法字段的<em>）
+          const isHtml = typeof displayValue === 'string' && displayValue.includes('<');
+          return `
+            <div class="field-container">
+              <div class="field-label">${label}:</div>
+              <div class="field-value">${displayValue}</div>
+            </div>
+          `;
+        }
+      }).join('');
+    },
+
+    // 渲染器材卡片
+    renderEquipmentCards() {
+      const subsections = this.getSubsections();
+      return Object.entries(subsections).map(([sectionName, sectionData]) => {
+        if (!this.isEquipmentObject(sectionData)) return '';
+
+        const cleanName = this.cleanFieldName(sectionName);
+        const title = this.addEmoji(cleanName);
+        const categories = Object.entries(sectionData).map(([categoryName, items]) => {
+          const cleanCategoryName = this.cleanFieldName(categoryName);
+          const categoryTitle = this.addEmoji(cleanCategoryName);
+          const isOther = cleanCategoryName === '其他';
+          const tags = items.map(item => `<span class="tag-base">${item}</span>`).join('');
+
+          return `
+            <div class="bg-gradient-to-br from-surface-secondary to-surface-accent border border-border-subtle p-2.5 rounded-[var(--radius-element)] ${isOther ? 'lg:col-span-2' : ''}">
+              <div class="text-accent-red font-semibold mb-2 text-sm tracking-wide uppercase">${categoryTitle}</div>
+              <div class="tag-container">${tags}</div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-surface-primary border border-border-subtle rounded-[var(--radius-card)] shadow-[var(--shadow-card)] mt-3">
+            <div
+              class="flex items-center justify-between cursor-pointer select-none p-3 rounded-[var(--radius-element)] hover:bg-surface-black transition-colors duration-200"
+              @click="equipmentCollapsed = !equipmentCollapsed"
+            >
+              <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
+              <span
+                class="text-accent-silver text-lg font-bold transition-transform duration-200 ease-in-out"
+                :class="equipmentCollapsed ? 'rotate-45' : 'rotate-0'"
+              >✕</span>
+            </div>
+            <div
+              class="collapsible-content"
+              :style="equipmentCollapsed ? 'grid-template-rows: 0fr' : 'grid-template-rows: 1fr'"
+            >
+              <div class="min-h-0 overflow-hidden">
+                <div class="p-3">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                    ${categories}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    },
+
+    // 渲染子部分
+    renderSubsections() {
+      const subsections = this.getSubsections();
+      const nonEquipmentSections = Object.entries(subsections).filter(([_, sectionData]) =>
+        !this.isEquipmentObject(sectionData)
+      );
+
+      if (nonEquipmentSections.length === 0) return '';
+
+      const sections = nonEquipmentSections.map(([sectionName, sectionData]) => {
+        const cleanName = this.cleanFieldName(sectionName);
+        const title = this.addEmoji(cleanName);
+
+        // 性爱部分特殊处理
+        if (cleanName === '性爱' && !this.shouldShowIntimacy()) {
+          return `
+            <div class="masonry-item">
+              <div class="bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
+                <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
+                <div class="text-center py-8 text-text-muted">${this.getIntimacyPlaceholder()}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // 普通子部分
+        const fields = Object.entries(sectionData).map(([fieldName, value]) => {
+          if (this.shouldHideField(fieldName, cleanName)) return '';
+
+          const cleanFieldName = this.cleanFieldName(fieldName);
+          const fieldLabel = this.addEmoji(cleanFieldName);
+          const displayValue = getFieldDisplayValue(fieldName, value, this.data, sectionData);
+
+          if (Array.isArray(value)) {
+            const tags = value.map(item => `<span class="tag-base">${item}</span>`).join('');
+            return `
+              <div class="field-container">
+                <div class="field-label">${fieldLabel}:</div>
+                <div class="field-value">
+                  <div class="tag-container">${tags}</div>
+                </div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="field-container">
+                <div class="field-label">${fieldLabel}:</div>
+                <div class="field-value">${displayValue}</div>
+              </div>
+            `;
+          }
+        }).join('');
+
+        return `
+          <div class="masonry-item">
+            <div class="bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
+              <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
+              ${fields}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `<div class="masonry-grid mt-3">${sections}</div>`;
     }
-
-    // 渲染所有角色部分
-    renderAllCharacterSections(data, container);
-
-    console.log("✓ 状态栏渲染完成");
-  } catch (error) {
-    console.error("✗ 初始化失败:", error);
-    setErrorState(container, error);
-  }
+  };
 }
 
-// 页面加载完成后初始化
-document.addEventListener("DOMContentLoaded", init);
+// 将函数暴露到全局作用域供Alpine.js使用
+window.statusApp = statusApp;
+window.characterCard = characterCard;

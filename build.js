@@ -337,6 +337,15 @@ async function loadStatusData() {
         if (!fs.existsSync("dist/main.js")) {
           console.error("❌ 错误：dist/main.js 未生成");
           console.error("检查 esbuild 是否成功完成");
+          console.error("入口文件:", isProduction && fs.existsSync("src/main.temp.js") ? "src/main.temp.js" : "src/main.js");
+
+          // 列出dist目录中的文件以便调试
+          if (fs.existsSync("dist")) {
+            const distFiles = fs.readdirSync("dist");
+            console.error("dist目录中的文件:", distFiles);
+          } else {
+            console.error("dist目录不存在");
+          }
           return;
         }
 
@@ -350,7 +359,21 @@ async function loadStatusData() {
 
         // 内联到HTML中（将 Tailwind 配置注入到第二个 script 标签）
         let finalHtml = htmlTemplate
-          .replace("<!-- TAILWIND_CONFIG -->", `<script>tailwind.config = { theme: { extend: { colors: { ${tailwindConfigScript} } } } };</script>`)
+          .replace("<!-- TAILWIND_CONFIG -->", `<script>
+            // 确保 Tailwind CSS 库已加载
+            if (typeof tailwind !== 'undefined') {
+              tailwind.config = { theme: { extend: { colors: { ${tailwindConfigScript} } } } };
+            } else {
+              // 如果 tailwind 还未定义，等待 DOM 加载完成后再设置
+              document.addEventListener('DOMContentLoaded', function() {
+                if (typeof tailwind !== 'undefined') {
+                  tailwind.config = { theme: { extend: { colors: { ${tailwindConfigScript} } } } };
+                } else {
+                  console.warn('Tailwind CSS library not loaded');
+                }
+              });
+            }
+          </script>`)
           .replace("<!-- CSS_PLACEHOLDER -->", `<style type="text/tailwindcss">${cssContent}</style>`)
           .replace("<!-- JS_PLACEHOLDER -->", `<script>${jsContent}</script>`);
 
@@ -446,7 +469,7 @@ const buildOptions = {
       : "src/main.js",
   ],
   bundle: true,
-  outdir: "dist",
+  outfile: "dist/main.js", // 明确指定输出文件名
   minify: true,
   minifyWhitespace: true,
   minifyIdentifiers: true,
