@@ -58,16 +58,20 @@ function extractDefaults(fields) {
 
 /**
  * 生成带类型前缀的字段名（用于 status.json，Silly Tavern 导入）
+ * 
+ * 规则：
+ * - 如果 type 以 $ 开头，说明是 White-X 特殊类型，需要添加前缀
+ * - 否则（string, number, object 等基础类型）不需要前缀
  */
 function buildFieldWithPrefix(fieldName, fieldConfig) {
   const typePrefix = fieldConfig.type;
 
-  // 基础类型不需要前缀
-  if (!typePrefix || typePrefix === 'string' || typePrefix === 'number' || typePrefix === 'object') {
+  // 没有类型定义或是基础类型，不需要前缀
+  if (!typePrefix || !typePrefix.startsWith('$')) {
     return fieldName;
   }
 
-  // 特殊类型需要前缀
+  // 任何以 $ 开头的类型都需要前缀（支持任何新增的 White-X 特殊类型）
   return `${typePrefix} ${fieldName}`;
 }
 
@@ -80,15 +84,17 @@ function buildPrefixedStructure(fields, defaults = {}) {
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     if (!fieldConfig || typeof fieldConfig !== 'object') continue;
 
+    // 检查字段本身是否需要添加前缀（支持容器对象也有 $ext 等前缀）
+    const prefixedName = buildFieldWithPrefix(fieldName, fieldConfig);
+
     if (fieldConfig.fields) {
-      // 嵌套对象：递归处理
-      result[fieldName] = buildPrefixedStructure(
+      // 嵌套对象：递归处理子字段
+      result[prefixedName] = buildPrefixedStructure(
         fieldConfig.fields,
         defaults[fieldName] || {}
       );
     } else {
-      // 添加类型前缀
-      const prefixedName = buildFieldWithPrefix(fieldName, fieldConfig);
+      // 普通字段：直接赋值
       result[prefixedName] = defaults[fieldName] !== undefined ? defaults[fieldName] : null;
     }
   }
@@ -131,26 +137,21 @@ try {
   // ========== 生成 status.json（含类型前缀，用于 Silly Tavern）==========
   const statusJson = {};
 
-  // 处理世界信息
-  if (schema['世界'] && schema['世界'].fields) {
-    const worldDefaults = extractDefaults(schema['世界'].fields);
-    statusJson['世界'] = buildPrefixedStructure(schema['世界'].fields, worldDefaults);
-  }
+  // 处理所有顶级字段（包括世界、{{user}}、女人等）
+  for (const [sectionName, sectionConfig] of Object.entries(schema)) {
+    if (!sectionConfig || typeof sectionConfig !== 'object') continue;
 
-  // 处理用户（{{user}}）
-  if (schema['{{user}}'] && schema['{{user}}'].fields) {
-    const userDefaults = extractDefaults(schema['{{user}}'].fields);
-    statusJson['{{user}}'] = buildPrefixedStructure(schema['{{user}}'].fields, userDefaults);
-  }
+    // 检查字段本身是否需要添加前缀
+    const prefixedName = buildFieldWithPrefix(sectionName, sectionConfig);
 
-  // 处理女性角色
-  if (schema['女人'] && schema['女人'].fields) {
-    statusJson['女人'] = {};
-    for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
-      if (characterConfig && characterConfig.fields) {
-        const charDefaults = extractDefaults(characterConfig.fields);
-        statusJson['女人'][characterName] = buildPrefixedStructure(characterConfig.fields, charDefaults);
-      }
+    if (sectionConfig.fields) {
+      // 如果有子字段，递归处理
+      const defaults = extractDefaults(sectionConfig.fields);
+      const structuredData = buildPrefixedStructure(sectionConfig.fields, defaults);
+      statusJson[prefixedName] = structuredData;
+    } else if (sectionConfig.default !== undefined) {
+      // 如果没有子字段但有默认值，直接使用
+      statusJson[prefixedName] = sectionConfig.default;
     }
   }
 
