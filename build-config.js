@@ -8,12 +8,8 @@
  * 流程:
  * 1. 读取 data/status.yaml (完整的 schema + 默认值)
  * 2. 提取 schema 定义和默认值
- * 3. 生成 data/status.json (仅包含默认值，不含类型前缀)
- * 4. 生成 data/status-vars.debug.json (状态栏格式，用于测试)
- * 
- * 目标:
- * - status.json: 编辑用途，包含所有初始值
- * - status-vars.debug.json: 测试用途，符合白X变量格式
+ * 3. 生成 data/status.json (含类型前缀，用于 Silly Tavern 导入)
+ * 4. 生成 data/status-vars.debug.json (无类型前缀，用于本地测试)
  */
 
 const fs = require('fs');
@@ -61,7 +57,7 @@ function extractDefaults(fields) {
 }
 
 /**
- * 生成带类型前缀的字段名（用于 status-vars.debug.json）
+ * 生成带类型前缀的字段名（用于 status.json，Silly Tavern 导入）
  */
 function buildFieldWithPrefix(fieldName, fieldConfig) {
   const typePrefix = fieldConfig.type;
@@ -76,7 +72,7 @@ function buildFieldWithPrefix(fieldName, fieldConfig) {
 }
 
 /**
- * 从 yaml 生成带前缀的完整结构（用于状态栏）
+ * 从 yaml 生成带前缀的完整结构（用于 status.json）
  */
 function buildPrefixedStructure(fields, defaults = {}) {
   const result = {};
@@ -100,6 +96,30 @@ function buildPrefixedStructure(fields, defaults = {}) {
   return result;
 }
 
+/**
+ * 从 yaml 生成无前缀的纯数据结构（用于 status-vars.debug.json）
+ */
+function buildPlainStructure(fields, defaults = {}) {
+  const result = {};
+
+  for (const [fieldName, fieldConfig] of Object.entries(fields)) {
+    if (!fieldConfig || typeof fieldConfig !== 'object') continue;
+
+    if (fieldConfig.fields) {
+      // 嵌套对象：递归处理
+      result[fieldName] = buildPlainStructure(
+        fieldConfig.fields,
+        defaults[fieldName] || {}
+      );
+    } else {
+      // 不添加前缀
+      result[fieldName] = defaults[fieldName] !== undefined ? defaults[fieldName] : null;
+    }
+  }
+
+  return result;
+}
+
 try {
   console.log('📋 从 status.yaml 生成配置文件...\n');
 
@@ -108,17 +128,19 @@ try {
   const yamlContent = fs.readFileSync(yamlPath, 'utf8');
   const schema = yaml.load(yamlContent);
 
-  // 生成 status.json（无前缀版本）
+  // ========== 生成 status.json（含类型前缀，用于 Silly Tavern）==========
   const statusJson = {};
 
   // 处理世界信息
   if (schema['世界'] && schema['世界'].fields) {
-    statusJson['世界'] = extractDefaults(schema['世界'].fields);
+    const worldDefaults = extractDefaults(schema['世界'].fields);
+    statusJson['世界'] = buildPrefixedStructure(schema['世界'].fields, worldDefaults);
   }
 
   // 处理用户（{{user}}）
   if (schema['{{user}}'] && schema['{{user}}'].fields) {
-    statusJson['{{user}}'] = extractDefaults(schema['{{user}}'].fields);
+    const userDefaults = extractDefaults(schema['{{user}}'].fields);
+    statusJson['{{user}}'] = buildPrefixedStructure(schema['{{user}}'].fields, userDefaults);
   }
 
   // 处理女性角色
@@ -126,7 +148,8 @@ try {
     statusJson['女人'] = {};
     for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
       if (characterConfig && characterConfig.fields) {
-        statusJson['女人'][characterName] = extractDefaults(characterConfig.fields);
+        const charDefaults = extractDefaults(characterConfig.fields);
+        statusJson['女人'][characterName] = buildPrefixedStructure(characterConfig.fields, charDefaults);
       }
     }
   }
@@ -134,9 +157,9 @@ try {
   // 写入 status.json
   const statusJsonPath = path.join(__dirname, 'data/status.json');
   fs.writeFileSync(statusJsonPath, JSON.stringify(statusJson, null, 2) + '\n');
-  console.log('✓ 已生成 data/status.json (所有默认值，无类型前缀)');
+  console.log('✓ 已生成 data/status.json (含类型前缀，用于 Silly Tavern 导入)');
 
-  // 生成 status-vars.debug.json（用于测试，符合白X格式）
+  // ========== 生成 status-vars.debug.json（无类型前缀，用于本地测试）==========
   const charVar = {
     '状态栏': {}
   };
@@ -144,7 +167,7 @@ try {
   // 添加世界信息
   if (schema['世界'] && schema['世界'].fields) {
     const worldDefaults = extractDefaults(schema['世界'].fields);
-    charVar['状态栏']['世界'] = buildPrefixedStructure(schema['世界'].fields, worldDefaults);
+    charVar['状态栏']['世界'] = buildPlainStructure(schema['世界'].fields, worldDefaults);
   }
 
   // 添加用户信息
@@ -152,7 +175,7 @@ try {
     const userDefaults = extractDefaults(schema['{{user}}'].fields);
     // 使用第一个用户的昵称作为 key，或默认为 "小二"
     const userName = '小二';
-    charVar['状态栏'][userName] = buildPrefixedStructure(schema['{{user}}'].fields, userDefaults);
+    charVar['状态栏'][userName] = buildPlainStructure(schema['{{user}}'].fields, userDefaults);
   }
 
   // 添加女性角色
@@ -161,7 +184,7 @@ try {
     for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
       if (characterConfig && characterConfig.fields) {
         const charDefaults = extractDefaults(characterConfig.fields);
-        charVar['状态栏']['女人'][characterName] = buildPrefixedStructure(characterConfig.fields, charDefaults);
+        charVar['状态栏']['女人'][characterName] = buildPlainStructure(characterConfig.fields, charDefaults);
       }
     }
   }
@@ -169,7 +192,7 @@ try {
   // 写入 status-vars.debug.json
   const charVarPath = path.join(__dirname, 'data/status-vars.debug.json');
   fs.writeFileSync(charVarPath, JSON.stringify(charVar, null, 2) + '\n');
-  console.log('✓ 已生成 data/status-vars.debug.json (测试用，含类型前缀)');
+  console.log('✓ 已生成 data/status-vars.debug.json (无类型前缀，用于本地测试)');
 
   console.log('\n✓ 配置生成完成');
 
