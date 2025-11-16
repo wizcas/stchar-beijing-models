@@ -92,64 +92,38 @@ async function loadTestData() {
 }
 
 /**
- * 智能数据加载器 - 在开发模式下优先使用测试数据，否则优先尝试生产数据
+ * 智能数据加载器 - 优先尝试生产数据，失败时回退到测试数据
  * @async
  * @returns {Promise<Object>} 加载的数据对象
- * @throws {AppError} 如果所有加载方式都失败
+ * @throws {AppError} 如果两种加载方式都失败
  */
 async function loadData() {
   let productionError = null;
   let testError = null;
-  
-  // 检查是否处于开发模式（STscript API 不可用）
-  const isDevelopment = typeof STscript === 'undefined';
-  
-  if (isDevelopment) {
-    // 开发模式：优先加载测试数据
-    console.log('📝 开发模式检测到，优先使用测试数据...');
-    
-    try {
-      const data = await loadTestData();
-      console.log('✓ 使用测试数据源');
-      return data;
-    } catch (error) {
-      testError = error;
-      console.log('⚠ 测试数据加载失败，尝试生产数据...');
-    }
-    
-    // 开发模式下回退到生产数据
-    try {
-      const data = await loadStatusData();
-      console.log('✓ 使用生产数据源');
-      return data;
-    } catch (error) {
-      productionError = error;
-    }
-  } else {
-    // 生产模式：优先加载生产数据
-    try {
-      const data = await loadStatusData();
-      console.log('✓ 使用生产数据源');
-      return data;
-    } catch (error) {
-      productionError = error;
-      console.log('⚠ 生产数据加载失败，尝试测试数据...');
-    }
-    
-    // 生产模式下回退到测试数据
-    try {
-      const data = await loadTestData();
-      console.log('✓ 使用测试数据源');
-      return data;
-    } catch (error) {
-      testError = error;
-    }
+
+  // 优先加载生产数据
+  try {
+    const data = await loadStatusData();
+    console.log('✓ 使用生产数据源');
+    return data;
+  } catch (error) {
+    productionError = error;
+    console.log('⚠ 生产数据加载失败，尝试测试数据...');
   }
 
-  // 所有方式都失败
+  // 回退到测试数据
+  try {
+    const data = await loadTestData();
+    console.log('✓ 使用测试数据源');
+    return data;
+  } catch (error) {
+    testError = error;
+  }
+
+  // 两种方式都失败
   const errorMessage = `无法加载数据:\n` +
-    `- ${productionError ? `生产数据: ${productionError.message}` : '生产数据: 未尝试'}\n` +
-    `- ${testError ? `测试数据: ${testError.message}` : '测试数据: 未尝试'}`;
+    `- 生产数据: ${productionError?.message || '未知错误'}\n` +
+    `- 测试数据: ${testError?.message || '未知错误'}`;
   
   throw new AppError(errorMessage, 'ALL_DATA_LOADING_FAILED');
 }
