@@ -43,22 +43,22 @@ import {
  * 主状态应用
  */
 function statusApp() {
-   return {
-     // 状态数据
-     loading: true,
-     error: false,
-     errorMessage: "",
-     userName: null,
-     userData: null,
-     womanData: {},
-     worldData: null,
-     taskList: [],
-     taskListCollapsed: true,
-     pendingDeleteTaskId: null, // 待确认删除的任务 ID
-     worldDateTime: "",
-     worldWeatherColor: "text-accent-silver",
-     worldWeatherEmoji: "⛅️",
-     worldWeatherText: "",
+  return {
+    // 状态数据
+    loading: true,
+    error: false,
+    errorMessage: "",
+    userName: null,
+    userData: null,
+    womanData: {},
+    worldData: null,
+    taskList: [],
+    taskListCollapsed: true,
+    pendingDeleteTaskId: null, // 待确认删除的任务 ID
+    worldDateTime: "",
+    worldWeatherColor: "text-accent-silver",
+    worldWeatherEmoji: "⛅️",
+    worldWeatherText: "",
 
     // 初始化函数
     async init() {
@@ -145,16 +145,17 @@ function statusApp() {
             // 测试环境：数组格式
             this.taskList = value.map((task, index) => ({
               ...task,
-              _taskId: index.toString()
+              _taskId: index.toString(),
             }));
           } else if (typeof value === "object" && value !== null) {
             // 生产环境：对象格式（用字符串作为键）
             // 将对象转换为数组，保留原始 key 作为 _taskId
-            this.taskList = Object.entries(value)
-              .map(([taskKey, taskValue]) => ({
+            this.taskList = Object.entries(value).map(
+              ([taskKey, taskValue]) => ({
                 ...taskValue,
-                _taskId: taskKey
-              }));
+                _taskId: taskKey,
+              }),
+            );
           }
           break;
         }
@@ -207,72 +208,72 @@ function statusApp() {
     // 根据天气关键词判断天气类型
     analyzeWeather(weatherText) {
       const text = weatherText.toLowerCase();
-      
+
       // 定义天气关键词和对应的颜色、emoji
       const weatherPatterns = [
         {
-          keywords: ['晴', '晴朗', '晴天', '阳光', '万里'],
-          color: 'text-amber-300',
-          emoji: '☀️'
+          keywords: ["晴", "晴朗", "晴天", "阳光", "万里"],
+          color: "text-amber-300",
+          emoji: "☀️",
         },
         {
-          keywords: ['雨', '下雨', '雨天', '淋雨'],
-          color: 'text-blue-400',
-          emoji: '🌧️'
+          keywords: ["雨", "下雨", "雨天", "淋雨"],
+          color: "text-blue-400",
+          emoji: "🌧️",
         },
         {
-          keywords: ['雪', '下雪', '飘雪', '雪花'],
-          color: 'text-cyan-200',
-          emoji: '❄️'
+          keywords: ["雪", "下雪", "飘雪", "雪花"],
+          color: "text-cyan-200",
+          emoji: "❄️",
         },
         {
-          keywords: ['云', '阴', '阴沉', '乌云', '多云'],
-          color: 'text-gray-300',
-          emoji: '☁️'
+          keywords: ["云", "阴", "阴沉", "乌云", "多云"],
+          color: "text-gray-300",
+          emoji: "☁️",
         },
         {
-          keywords: ['暴雨', '大雨', '暴风', '雷电', '闪电'],
-          color: 'text-blue-600',
-          emoji: '⛈️'
+          keywords: ["暴雨", "大雨", "暴风", "雷电", "闪电"],
+          color: "text-blue-600",
+          emoji: "⛈️",
         },
         {
-          keywords: ['雾', '雾霾', '朦胧'],
-          color: 'text-gray-400',
-          emoji: '🌫️'
+          keywords: ["雾", "雾霾", "朦胧"],
+          color: "text-gray-400",
+          emoji: "🌫️",
         },
         {
-          keywords: ['热', '炎热', '酷热', '烈日'],
-          color: 'text-red-400',
-          emoji: '🔥'
+          keywords: ["热", "炎热", "酷热", "烈日"],
+          color: "text-red-400",
+          emoji: "🔥",
         },
         {
-          keywords: ['冷', '寒冷', '冰冷', '刺骨'],
-          color: 'text-blue-300',
-          emoji: '❄️'
+          keywords: ["冷", "寒冷", "冰冷", "刺骨"],
+          color: "text-blue-300",
+          emoji: "❄️",
         },
         {
-          keywords: ['温暖', '舒适', '宜人'],
-          color: 'text-green-300',
-          emoji: '🌤️'
+          keywords: ["温暖", "舒适", "宜人"],
+          color: "text-green-300",
+          emoji: "🌤️",
         },
         {
-          keywords: ['风', '有风', '微风', '大风'],
-          color: 'text-purple-300',
-          emoji: '💨'
-        }
+          keywords: ["风", "有风", "微风", "大风"],
+          color: "text-purple-300",
+          emoji: "💨",
+        },
       ];
 
       // 匹配关键词，返回第一个匹配的结果
       for (const pattern of weatherPatterns) {
-        if (pattern.keywords.some(keyword => text.includes(keyword))) {
+        if (pattern.keywords.some((keyword) => text.includes(keyword))) {
           return pattern;
         }
       }
 
       // 默认值
       return {
-        color: 'text-accent-silver',
-        emoji: '⛅️'
+        color: "text-accent-silver",
+        emoji: "⛅️",
       };
     },
 
@@ -312,7 +313,7 @@ function statusApp() {
 
       // 分别生成日期时间和位置信息，天气单独一行
       this.worldDateTime = `📅 ${year}-${month}-${date} 星期${weekDay} ${hours}:${minutes}${timezoneDisplay} 📍 ${地点}`;
-      
+
       // 根据天气内容分析并应用颜色和emoji
       const weatherAnalysis = this.analyzeWeather(天气);
       this.worldWeatherColor = weatherAnalysis.color;
@@ -343,36 +344,47 @@ function statusApp() {
         }
 
         // 第二次点击，执行删除
-         console.log(`🗑️ 删除任务: ${taskId}`);
+        console.log(`🗑️ 删除任务: ${taskId}`);
 
-         // 调用 STScript 执行删除操作
-         if (typeof STscript !== "undefined") {
-           // 1. 获取当前的拍摄任务对象
-           const tasksJsonStr = await STscript(`/getvar 状态栏.{{user}}.拍摄任务`);
-           const tasksData = typeof tasksJsonStr === 'string' ? JSON.parse(tasksJsonStr) : tasksJsonStr;
-           
-           if (!tasksData || typeof tasksData !== 'object') {
-             console.error("❌ 无法获取拍摄任务数据");
-             this.pendingDeleteTaskId = null;
-             return;
-           }
+        // 调用 STScript 执行删除操作
+        if (typeof STscript !== "undefined") {
+          // 1. 获取当前的拍摄任务对象
+          const tasksJsonStr = await STscript(
+            `/xbgetvar 状态栏.{{user}}.拍摄任务`,
+          );
+          console.log({ tasksJsonStr });
+          const tasksData =
+            typeof tasksJsonStr === "string"
+              ? JSON.parse(tasksJsonStr)
+              : tasksJsonStr;
 
-           // 2. 从拍摄任务对象中删除对应的key
-           delete tasksData[taskId];
-           console.log(`✓ 从对象中删除任务key: ${taskId}`);
+          if (!tasksData || typeof tasksData !== "object") {
+            console.error("❌ 无法获取拍摄任务数据");
+            this.pendingDeleteTaskId = null;
+            return;
+          }
 
-           // 3. 将修改后的拍摄任务对象重新设置回酒馆
-           const updatedTasksJson = JSON.stringify(tasksData);
-           await STscript(`/xbsetvar key="$free 状态栏.{{user}}.拍摄任务" ${updatedTasksJson}`);
-           console.log("✓ 任务删除成功，已更新到酒馆");
-           
-           // 从本地任务列表中移除
-           this.taskList = this.taskList.filter((task) => task._taskId !== taskId);
-           // 清除待删除状态
-           this.pendingDeleteTaskId = null;
-         } else {
-           console.error("❌ STScript API 不可用");
-         }
+          // 2. 从拍摄任务对象中删除对应的key
+          delete tasksData[taskId];
+          console.log(`✓ 从对象中删除任务key: ${taskId}`);
+
+          // 3. 将修改后的拍摄任务对象重新设置回酒馆
+          const updatedTasksJson = JSON.stringify(tasksData);
+          console.log({ tasksData, updatedTasksJson });
+          await STscript(
+            `/xbsetvar key="$free 状态栏.{{user}}.拍摄任务" ${updatedTasksJson}`,
+          );
+          console.log("✓ 任务删除成功，已更新到酒馆");
+
+          // 从本地任务列表中移除
+          this.taskList = this.taskList.filter(
+            (task) => task._taskId !== taskId,
+          );
+          // 清除待删除状态
+          this.pendingDeleteTaskId = null;
+        } else {
+          console.error("❌ STScript API 不可用");
+        }
       } catch (error) {
         console.error("❌ 删除任务失败:", error);
         this.pendingDeleteTaskId = null;
@@ -382,36 +394,36 @@ function statusApp() {
     // 获取任务状态的显示信息（文字、颜色、emoji）
     getTaskStatusDisplay(status) {
       const statusMap = {
-        "未开始": {
+        未开始: {
           emoji: "⏳",
           text: "未开始",
           bgClass: "bg-gray-700/40",
           textClass: "text-gray-300",
-          borderClass: "border-gray-600/50"
+          borderClass: "border-gray-600/50",
         },
-        "进行中": {
+        进行中: {
           emoji: "⚙️",
           text: "进行中",
           bgClass: "bg-blue-700/40",
           textClass: "text-blue-300",
-          borderClass: "border-blue-600/50"
+          borderClass: "border-blue-600/50",
         },
-        "已完成": {
+        已完成: {
           emoji: "✅",
           text: "已完成",
           bgClass: "bg-green-700/40",
           textClass: "text-green-300",
-          borderClass: "border-green-600/50"
+          borderClass: "border-green-600/50",
         },
-        "已取消": {
+        已取消: {
           emoji: "❌",
           text: "已取消",
           bgClass: "bg-orange-700/40",
           textClass: "text-orange-300",
-          borderClass: "border-orange-600/50"
-        }
+          borderClass: "border-orange-600/50",
+        },
       };
-      
+
       return statusMap[status] || statusMap["未开始"];
     },
   };
