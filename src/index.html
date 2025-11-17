@@ -91,18 +91,29 @@
                     :key="'task-' + index"
                   >
                     <div class="task-filmstrip-card masonry-item">
-                      <template
-                        x-for="(value, key) in task"
-                        :key="'task-' + index + '-' + key"
+                      <div class="task-card-header">
+                        <template
+                          x-for="(value, key) in task"
+                          :key="'task-' + index + '-' + key"
+                        >
+                          <template x-if="key !== '_taskId'">
+                            <div class="field-container">
+                              <div class="field-label" x-text="key + ':'"></div>
+                              <div
+                                class="field-value"
+                                x-text="key === '报酬' && typeof value === 'number' ? '￥' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : value"
+                              ></div>
+                            </div>
+                          </template>
+                        </template>
+                      </div>
+                      <button
+                        class="delete-task-btn"
+                        @click="deleteTask(task._taskId)"
+                        title="删除此任务"
                       >
-                        <div class="field-container">
-                          <div class="field-label" x-text="key + ':'"></div>
-                          <div
-                            class="field-value"
-                            x-text="key === '报酬' && typeof value === 'number' ? '￥' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : value"
-                          ></div>
-                        </div>
-                      </template>
+                        🗑️ 删除任务
+                      </button>
                     </div>
                   </template>
                 </div>

@@ -142,13 +142,18 @@ function statusApp() {
         if (key.includes("拍摄任务")) {
           if (Array.isArray(value)) {
             // 测试环境：数组格式
-            this.taskList = value;
+            this.taskList = value.map((task, index) => ({
+              ...task,
+              _taskId: index.toString()
+            }));
           } else if (typeof value === "object" && value !== null) {
-            // 生产环境：对象格式（用字符串索引作为键）
-            // 将对象转换为数组，按键排序
-            this.taskList = Object.keys(value)
-              .sort((a, b) => parseInt(a) - parseInt(b))
-              .map(key => value[key]);
+            // 生产环境：对象格式（用字符串作为键）
+            // 将对象转换为数组，保留原始 key 作为 _taskId
+            this.taskList = Object.entries(value)
+              .map(([taskKey, taskValue]) => ({
+                ...taskValue,
+                _taskId: taskKey
+              }));
           }
           break;
         }
@@ -312,6 +317,33 @@ function statusApp() {
       this.worldWeatherColor = weatherAnalysis.color;
       this.worldWeatherEmoji = weatherAnalysis.emoji;
       this.worldWeatherText = 天气;
+    },
+
+    // 删除拍摄任务
+    async deleteTask(taskId) {
+      try {
+        if (!taskId) {
+          console.error("❌ 任务ID无效");
+          return;
+        }
+
+        console.log(`🗑️ 删除任务: ${taskId}`);
+
+        // 调用 STScript 执行删除操作
+        if (typeof STscript !== "undefined") {
+          await STscript(
+            `/eval {{delete 状态栏.{{user}}.拍摄任务.${taskId}}}`
+          );
+          console.log("✓ 任务删除成功");
+          
+          // 从本地任务列表中移除
+          this.taskList = this.taskList.filter((task) => task._taskId !== taskId);
+        } else {
+          console.error("❌ STScript API 不可用");
+        }
+      } catch (error) {
+        console.error("❌ 删除任务失败:", error);
+      }
     },
   };
 }

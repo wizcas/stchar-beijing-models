@@ -380,12 +380,29 @@
      @apply border-b-0;
    }
 
-   /* 任务卡片的标签样式 */
-   .task-filmstrip-card .tag-base {
-     @apply bg-surface-primary hover:bg-surface-accent;
-   }
+    /* 任务卡片的标签样式 */
+    .task-filmstrip-card .tag-base {
+      @apply bg-surface-primary hover:bg-surface-accent;
+    }
 
-   /* 移动端任务卡片样式 */
+    /* 任务卡片头部 */
+    .task-card-header {
+      @apply flex flex-col gap-2;
+    }
+
+    /* 删除任务按钮样式 */
+    .delete-task-btn {
+      @apply w-full mt-3 px-3 py-2 text-sm font-semibold rounded transition-all duration-200;
+      @apply bg-red-900/30 text-red-400 border border-red-700/50;
+      @apply hover:bg-red-900/60 hover:border-red-600 hover:text-red-300;
+      @apply active:scale-95 cursor-pointer;
+    }
+
+    .delete-task-btn:disabled {
+      @apply opacity-50 cursor-not-allowed;
+    }
+
+    /* 移动端任务卡片样式 */
    @media (max-width: 767px) {
      .task-filmstrip-card {
        @apply p-2;
