@@ -109,10 +109,16 @@
                       </div>
                       <button
                         class="delete-task-btn"
+                        :class="pendingDeleteTaskId === task._taskId ? 'delete-task-btn-confirm' : ''"
                         @click="deleteTask(task._taskId)"
                         title="删除此任务"
                       >
-                        🗑️ 删除任务
+                        <span x-show="pendingDeleteTaskId !== task._taskId">
+                          🗑️ 删除任务
+                        </span>
+                        <span x-show="pendingDeleteTaskId === task._taskId">
+                          ⚠️ 再次点击确认删除
+                        </span>
                       </button>
                     </div>
                   </template>

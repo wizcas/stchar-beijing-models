@@ -402,6 +402,13 @@
       @apply opacity-50 cursor-not-allowed;
     }
 
+    /* 确认删除状态样式 */
+    .delete-task-btn-confirm {
+      @apply bg-red-800/60 text-red-200 border border-red-500;
+      @apply hover:bg-red-800/80 hover:border-red-400 hover:text-red-100;
+      @apply shadow-[0_0_8px_rgba(239,68,68,0.3)];
+    }
+
     /* 移动端任务卡片样式 */
    @media (max-width: 767px) {
      .task-filmstrip-card {

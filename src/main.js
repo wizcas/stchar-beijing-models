@@ -43,21 +43,22 @@ import {
  * 主状态应用
  */
 function statusApp() {
-  return {
-    // 状态数据
-    loading: true,
-    error: false,
-    errorMessage: "",
-    userName: null,
-    userData: null,
-    womanData: {},
-    worldData: null,
-    taskList: [],
-    taskListCollapsed: true,
-    worldDateTime: "",
-    worldWeatherColor: "text-accent-silver",
-    worldWeatherEmoji: "⛅️",
-    worldWeatherText: "",
+   return {
+     // 状态数据
+     loading: true,
+     error: false,
+     errorMessage: "",
+     userName: null,
+     userData: null,
+     womanData: {},
+     worldData: null,
+     taskList: [],
+     taskListCollapsed: true,
+     pendingDeleteTaskId: null, // 待确认删除的任务 ID
+     worldDateTime: "",
+     worldWeatherColor: "text-accent-silver",
+     worldWeatherEmoji: "⛅️",
+     worldWeatherText: "",
 
     // 初始化函数
     async init() {
@@ -319,7 +320,7 @@ function statusApp() {
       this.worldWeatherText = 天气;
     },
 
-    // 删除拍摄任务
+    // 删除拍摄任务 - 二次确认机制
     async deleteTask(taskId) {
       try {
         if (!taskId) {
@@ -327,6 +328,21 @@ function statusApp() {
           return;
         }
 
+        // 检查是否是第一次点击（需要确认）
+        if (this.pendingDeleteTaskId !== taskId) {
+          console.log(`⚠️ 待删除任务: ${taskId}，请再次点击确认`);
+          this.pendingDeleteTaskId = taskId;
+          // 2秒后自动取消确认状态
+          setTimeout(() => {
+            if (this.pendingDeleteTaskId === taskId) {
+              this.pendingDeleteTaskId = null;
+              console.log(`ℹ️ 删除确认已取消: ${taskId}`);
+            }
+          }, 3000);
+          return;
+        }
+
+        // 第二次点击，执行删除
         console.log(`🗑️ 删除任务: ${taskId}`);
 
         // 调用 STScript 执行删除操作
@@ -338,11 +354,14 @@ function statusApp() {
           
           // 从本地任务列表中移除
           this.taskList = this.taskList.filter((task) => task._taskId !== taskId);
+          // 清除待删除状态
+          this.pendingDeleteTaskId = null;
         } else {
           console.error("❌ STScript API 不可用");
         }
       } catch (error) {
         console.error("❌ 删除任务失败:", error);
+        this.pendingDeleteTaskId = null;
       }
     },
   };
