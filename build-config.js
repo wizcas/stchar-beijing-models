@@ -76,6 +76,14 @@ function buildFieldWithPrefix(fieldName, fieldConfig) {
 }
 
 /**
+ * 替换模板变量
+ * 支持 {{key}} 替换为实际的键名
+ */
+function replaceTemplate(template, key) {
+  return template.replace(/\{\{key\}\}/g, key);
+}
+
+/**
  * 从 yaml 生成带前缀的完整结构（用于 status.json）
  */
 function buildPrefixedStructure(fields, defaults = {}) {
@@ -83,6 +91,13 @@ function buildPrefixedStructure(fields, defaults = {}) {
 
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     if (!fieldConfig || typeof fieldConfig !== 'object') continue;
+
+    // 处理模板字段（如 {{key}}）
+    if (fieldName === '{{key}}') {
+      // 对于模板字段，我们不生成具体的键，而是让 Silly Tavern 动态处理
+      // 这里不添加任何内容到结果中
+      continue;
+    }
 
     // 检查字段本身是否需要添加前缀（支持容器对象也有 $ext 等前缀）
     const prefixedName = buildFieldWithPrefix(fieldName, fieldConfig);
@@ -113,6 +128,15 @@ function buildPlainStructure(fields, defaults = {}) {
 
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     if (!fieldConfig || typeof fieldConfig !== 'object') continue;
+
+    // 处理模板字段（如 {{key}}）- 对于调试数据，我们生成一个示例结构
+    if (fieldName === '{{key}}') {
+      const fieldDefaults = extractDefaults(fieldConfig.fields);
+      const structuredData = buildPlainStructure(fieldConfig.fields, fieldDefaults);
+      // 为 {{key}} 模板字段创建一个示例条目
+      result['示例角色'] = structuredData;
+      continue;
+    }
 
     // 优先使用 defaults 中明确定义的值
     if (defaults[fieldName] !== undefined) {
@@ -188,10 +212,58 @@ try {
   // 添加女性角色
   if (schema['女人'] && schema['女人'].fields) {
     charVar['状态栏']['女人'] = {};
-    for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
-      if (characterConfig && characterConfig.fields) {
-        const charDefaults = extractDefaults(characterConfig.fields);
-        charVar['状态栏']['女人'][characterName] = buildPlainStructure(characterConfig.fields, charDefaults);
+    
+    // 检查是否有 {{key}} 模板字段
+    if (schema['女人'].fields['{{key}}']) {
+      // 使用模板字段的结构生成一个示例角色
+      const templateConfig = schema['女人'].fields['{{key}}'];
+      if (templateConfig.fields) {
+        const charDefaults = extractDefaults(templateConfig.fields);
+        const structuredData = buildPlainStructure(templateConfig.fields, charDefaults);
+        // 创建一个示例角色（保持原有的六花数据）
+        charVar['状态栏']['女人']['六花'] = {
+          ...structuredData,
+          昵称: "六花",
+          真名: "林六花",
+          想法: "第一次找专业摄影师拍照呢，好紧张……{{user}}哥哥会是个什么样的人呢？",
+          关系: {
+            ...structuredData.关系,
+            堕落度描述: "对自身有清晰的底线，坚定地保护自己，拒绝向{{user}}妥协。",
+            好感度描述: "与{{user}}陌生，保持基本的商业关系。"
+          },
+          外型: {
+            ...structuredData.外型,
+            五官: "桃花眼，小鼻子，唇形微翘",
+            发型: "黑色中长直发",
+            穿搭: "粉色棉质长袖长裤睡衣/未穿内衣/棉质内裤。",
+            身高: 168,
+            体重: 52,
+            胸围: 88,
+            腰围: 60,
+            臀围: 90,
+            罩杯: "B"
+          },
+          职业: {
+            ...structuredData.职业,
+            类型: ["学生", "模特"],
+            人设: ["新手"]
+          },
+          性爱: {
+            ...structuredData.性爱,
+            性癖: ["纯爱", "年上"],
+            乳房: "乳房饱满紧实，B罩杯的大小恰到好处。乳头呈淡粉色，未经任何刺激，处于完全放松的自然状态，敏感度未知。",
+            小穴: "小穴未经开启，阴唇紧合呈粉红色，尚未有任何湿润迹象。处女状，内部紧致而陌生，充满未知的敏感性。",
+            肛门: "菊花紧闭，外围皮肤细腻，呈健康的肉色。括约肌完全收紧，从未被任何东西触及，对这个部位的任何刺激都充满未知和恐惧。"
+          }
+        };
+      }
+    } else {
+      // 兼容旧版本：直接处理具体的角色字段
+      for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
+        if (characterConfig && characterConfig.fields) {
+          const charDefaults = extractDefaults(characterConfig.fields);
+          charVar['状态栏']['女人'][characterName] = buildPlainStructure(characterConfig.fields, charDefaults);
+        }
       }
     }
   }

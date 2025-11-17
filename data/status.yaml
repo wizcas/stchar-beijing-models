@@ -99,25 +99,26 @@
             - "Dell Inspiron 16 Plus 笔记本电脑"
 
 女人:
-  type: "$ext"
-  description: "女性角色数据"
+  type: "$free"
+  description: "女性角色数据集合，支持动态添加新角色"
   fields:
-    六花:
+    "{{key}}":
       type: "object"
-      description: "六花角色数据"
+      description: "单个女性角色数据，key为角色名称"
+      required_fields: ["昵称", "真名"]
       fields:
         昵称:
           type: "$ro"
           description: "角色昵称（只读）"
-          default: "六花"
+          default: ""
         真名:
           type: "$ro"
           description: "角色真名（只读）"
-          default: "林六花"
+          default: ""
         想法:
           type: "string"
           description: "角色当前的内心想法"
-          default: "第一次找专业摄影师拍照呢，好紧张……{{user}}哥哥会是个什么样的人呢？"
+          default: ""
         关系:
           type: "object"
           description: "与摄影师的关系数据"
@@ -129,7 +130,7 @@
             堕落度描述:
               type: "string"
               description: "根据堕落度范围生成的沉浸式描述，反映模特的心理状态"
-              default: "对自身有清晰的底线，坚定地保护自己，拒绝向{{user}}妥协。"
+              default: ""
             好感度:
               type: "$range=[-100,100]"
               description: "对摄影师的好感度（-100为仇恨，100为深爱）"
@@ -137,7 +138,7 @@
             好感度描述:
               type: "string"
               description: "根据好感度范围生成的沉浸式描述，反映与摄影师的关系深度"
-              default: "与{{user}}陌生，保持基本的商业关系。"
+              default: ""
         外型:
           type: "object"
           description: "角色的外观描述"
@@ -145,27 +146,27 @@
             五官:
               type: "string"
               description: "五官特征描述"
-              default: "桃花眼，小鼻子，唇形微翘"
+              default: ""
             发型:
               type: "string"
               description: "发型描述"
-              default: "黑色中长直发"
+              default: ""
             穿搭:
               type: "string"
               description: "服装和穿着描述"
-              default: "粉色棉质长袖长裤睡衣/未穿内衣/棉质内裤。"
+              default: ""
             身高:
               type: "$range=[100,250]"
               description: "身高（单位：cm）"
-              default: 168
+              default: 160
             体重:
               type: "$range=[30,150]"
               description: "体重（单位：kg）"
-              default: 52
+              default: 50
             胸围:
               type: "$range=[60,120]"
               description: "胸围（单位：cm）"
-              default: 88
+              default: 80
             腰围:
               type: "$range=[40,120]"
               description: "腰围（单位：cm）"
@@ -173,11 +174,11 @@
             臀围:
               type: "$range=[60,120]"
               description: "臀围（单位：cm）"
-              default: 90
+              default: 85
             罩杯:
               type: "string"
               description: "胸部罩杯大小"
-              default: "B"
+              default: "A"
         职业:
           type: "object"
           description: "角色的职业信息"
@@ -185,9 +186,7 @@
             类型:
               type: "$list"
               description: "职业类型列表"
-              default:
-                - "学生"
-                - "模特"
+              default: []
             层级:
               type: "$enum={新手;进阶;专业}"
               description: "模特等级"
@@ -203,8 +202,7 @@
             人设:
               type: "$list"
               description: "角色人设标签列表"
-              default:
-                - "新手"
+              default: []
         性爱:
           type: "object"
           description: "角色的性爱状态数据"
@@ -212,9 +210,7 @@
             性癖:
               type: "$list"
               description: "性癖好列表"
-              default:
-                - "纯爱"
-                - "年上"
+              default: []
             性经验次数:
               type: "$range=[0,10000]"
               description: "性经验次数"
@@ -226,12 +222,13 @@
             乳房:
               type: "string"
               description: "乳房和乳头的当前状态、外观、敏感度等，与性癖和动情程度挂钩"
-              default: "乳房饱满紧实，B罩杯的大小恰到好处。乳头呈淡粉色，未经任何刺激，处于完全放松的自然状态，敏感度未知。"
+              default: ""
             小穴:
               type: "string"
               description: "小穴和阴道当前的状态，如外观、湿润程度、内部情况等，与性癖和动情程度挂钩"
-              default: "小穴未经开启，阴唇紧合呈粉红色，尚未有任何湿润迹象。处女状，内部紧致而陌生，充满未知的敏感性。"
+              default: ""
             肛门:
               type: "string"
               description: "菊花内外的状态，如外观、紧致程度、敏感度等，与性癖和动情程度挂钩"
-              default: "菊花紧闭，外围皮肤细腻，呈健康的肉色。括约肌完全收紧，从未被任何东西触及，对这个部位的任何刺激都充满未知和恐惧。"
+              default: ""
+  default: {}
