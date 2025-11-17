@@ -343,22 +343,36 @@ function statusApp() {
         }
 
         // 第二次点击，执行删除
-        console.log(`🗑️ 删除任务: ${taskId}`);
+         console.log(`🗑️ 删除任务: ${taskId}`);
 
-        // 调用 STScript 执行删除操作
-        if (typeof STscript !== "undefined") {
-          await STscript(
-            `/eval {{delete 状态栏.{{user}}.拍摄任务.${taskId}}}`
-          );
-          console.log("✓ 任务删除成功");
-          
-          // 从本地任务列表中移除
-          this.taskList = this.taskList.filter((task) => task._taskId !== taskId);
-          // 清除待删除状态
-          this.pendingDeleteTaskId = null;
-        } else {
-          console.error("❌ STScript API 不可用");
-        }
+         // 调用 STScript 执行删除操作
+         if (typeof STscript !== "undefined") {
+           // 1. 获取当前的拍摄任务对象
+           const tasksJsonStr = await STscript(`/getvar 状态栏.{{user}}.拍摄任务`);
+           const tasksData = typeof tasksJsonStr === 'string' ? JSON.parse(tasksJsonStr) : tasksJsonStr;
+           
+           if (!tasksData || typeof tasksData !== 'object') {
+             console.error("❌ 无法获取拍摄任务数据");
+             this.pendingDeleteTaskId = null;
+             return;
+           }
+
+           // 2. 从拍摄任务对象中删除对应的key
+           delete tasksData[taskId];
+           console.log(`✓ 从对象中删除任务key: ${taskId}`);
+
+           // 3. 将修改后的拍摄任务对象重新设置回酒馆
+           const updatedTasksJson = JSON.stringify(tasksData);
+           await STscript(`/xbsetvar key="$free 状态栏.{{user}}.拍摄任务" ${updatedTasksJson}`);
+           console.log("✓ 任务删除成功，已更新到酒馆");
+           
+           // 从本地任务列表中移除
+           this.taskList = this.taskList.filter((task) => task._taskId !== taskId);
+           // 清除待删除状态
+           this.pendingDeleteTaskId = null;
+         } else {
+           console.error("❌ STScript API 不可用");
+         }
       } catch (error) {
         console.error("❌ 删除任务失败:", error);
         this.pendingDeleteTaskId = null;
