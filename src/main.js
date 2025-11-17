@@ -678,7 +678,7 @@ function characterCard(characterData, characterName, characterType) {
           if (cleanName === "性爱" && !this.shouldShowIntimacy()) {
             return `
             <div class="masonry-item">
-              <div class="bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
+              <div class="bg-surface-accent border border-border-subtle p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
                 <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
                 <div class="text-center py-8 text-text-muted">${this.getIntimacyPlaceholder()}</div>
               </div>
@@ -725,7 +725,7 @@ function characterCard(characterData, characterName, characterType) {
 
           return `
           <div class="masonry-item">
-            <div class="bg-surface-accent border border-border-accent p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
+            <div class="bg-surface-accent border border-border-subtle p-3 rounded-[var(--radius-element)] h-fit shadow-[var(--shadow-element)] flex flex-col gap-2">
               <h3 class="text-accent-amber font-semibold text-left text-md tracking-wide flex items-center">${title}</h3>
               ${fields}
             </div>
