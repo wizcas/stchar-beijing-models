@@ -364,6 +364,42 @@ function statusApp() {
         this.pendingDeleteTaskId = null;
       }
     },
+
+    // 获取任务状态的显示信息（文字、颜色、emoji）
+    getTaskStatusDisplay(status) {
+      const statusMap = {
+        "未开始": {
+          emoji: "⏳",
+          text: "未开始",
+          bgClass: "bg-gray-700/40",
+          textClass: "text-gray-300",
+          borderClass: "border-gray-600/50"
+        },
+        "进行中": {
+          emoji: "⚙️",
+          text: "进行中",
+          bgClass: "bg-blue-700/40",
+          textClass: "text-blue-300",
+          borderClass: "border-blue-600/50"
+        },
+        "已完成": {
+          emoji: "✅",
+          text: "已完成",
+          bgClass: "bg-green-700/40",
+          textClass: "text-green-300",
+          borderClass: "border-green-600/50"
+        },
+        "已取消": {
+          emoji: "❌",
+          text: "已取消",
+          bgClass: "bg-orange-700/40",
+          textClass: "text-orange-300",
+          borderClass: "border-orange-600/50"
+        }
+      };
+      
+      return statusMap[status] || statusMap["未开始"];
+    },
   };
 }
 
