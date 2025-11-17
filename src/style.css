@@ -319,12 +319,12 @@
     @apply relative bg-surface-secondary border-2 border-border-accent rounded-sm p-3 shadow-element break-inside-avoid;
     background: linear-gradient(
       135deg,
-      var(--color-surface-accent) 0%,
+      var(--color-surface-black) 0%,
       var(--color-surface-secondary) 50%,
-      var(--color-surface-accent) 100%
+      var(--color-surface-black) 100%
     );
     background-size: 200% 200%;
-    animation: filmstripShine 3s ease-in-out infinite;
+    animation: filmstripShine 6s ease-in-out infinite;
     /* 胶片打孔效果 - 左右两侧 */
     border-left: 8px solid var(--color-surface-black);
     border-right: 8px solid var(--color-surface-black);
