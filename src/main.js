@@ -157,9 +157,49 @@ function statusApp() {
               }),
             );
           }
+          // 对任务列表进行排序
+          this.sortTaskList();
           break;
         }
       }
+    },
+
+    // 任务列表排序：状态优先级 > 截止日期 > 报酬 > 模特名字
+    sortTaskList() {
+      const statusPriority = {
+        "进行中": 0,
+        "未开始": 1,
+        "已完成": 2,
+        "已取消": 3,
+      };
+
+      this.taskList.sort((a, b) => {
+        // 1. 按状态优先级排序
+        const statusA = statusPriority[a.状态] ?? 99;
+        const statusB = statusPriority[b.状态] ?? 99;
+        if (statusA !== statusB) {
+          return statusA - statusB;
+        }
+
+        // 2. 同一状态下，按截止日期正序排序
+        const dateA = new Date(a.期限).getTime();
+        const dateB = new Date(b.期限).getTime();
+        if (dateA !== dateB) {
+          return dateA - dateB;
+        }
+
+        // 3. 状态和期限都相同，按报酬倒序排序
+        const rewardA = typeof a.报酬 === "number" ? a.报酬 : 0;
+        const rewardB = typeof b.报酬 === "number" ? b.报酬 : 0;
+        if (rewardA !== rewardB) {
+          return rewardB - rewardA;
+        }
+
+        // 4. 最后按模特名字排序
+        const modelA = (a.模特 || "").toString();
+        const modelB = (b.模特 || "").toString();
+        return modelA.localeCompare(modelB, "zh-CN");
+      });
     },
 
     // 格式化数字
