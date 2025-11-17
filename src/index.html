@@ -94,28 +94,16 @@
                       <div class="task-card-header">
                         <!-- 状态字段单独显示在第一位 -->
                         <template x-if="task.状态">
-                          <div
-                            class="field-container task-status-field"
-                            :style="`border-left: 4px solid; border-left-color: ${(() => {
-                              const statusDisplay = getTaskStatusDisplay(task.状态);
-                              const colorMap = {
-                                'bg-gray-700/40': '#4B5563',
-                                'bg-blue-700/40': '#1E40AF',
-                                'bg-green-700/40': '#15803D',
-                                'bg-orange-700/40': '#B45309'
-                              };
-                              return colorMap[statusDisplay.bgClass] || '#4B5563';
-                            })()}`"
-                          >
-                            <div class="field-label">
-                              <span x-text="getTaskStatusDisplay(task.状态).emoji"></span>
-                              <span>状态</span>
-                            </div>
-                            <div
-                              class="field-value task-status-value"
+                          <div class="task-status-field">
+                            <span
+                              class="task-status-emoji"
+                              x-text="getTaskStatusDisplay(task.状态).emoji"
+                            ></span>
+                            <span
+                              class="task-status-text"
                               :class="getTaskStatusDisplay(task.状态).textClass"
                               x-text="getTaskStatusDisplay(task.状态).text"
-                            ></div>
+                            ></span>
                           </div>
                         </template>
 
