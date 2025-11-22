@@ -95,7 +95,7 @@ beijing-models/
 │   ├── status.json                 # 运行时数据（初始值覆盖）
 │   └── status-vars.debug.json      # 自动生成的合并数据（调试用）
 │
-├── 📂 worldbooks/                   # 游戏设定文档（AI 提示词库）
+├── 📂 worldbooks/                   # 游戏设定文档（AI 提示词库 - 完整版）
 │   ├── {{user}}.md                 # 摄影师（玩家）角色设定
 │   ├── opening.md                  # 游戏开场剧本
 │   ├── status.md                   # 状态系统字段文档
@@ -106,7 +106,17 @@ beijing-models/
 │   ├── random-model.md             # 随机模特生成规则
 │   ├── equipment-requirements.md   # 器材系统
 │   ├── censorship-system.md        # 内容审查系统
-│   └── writing-style.md            # 北京话风格指南
+│   ├── writing-style.md            # 北京话风格指南
+│   ├── plot-log-format-guide.md    # Plot-log 操作规范
+│   ├── COT.md                      # 思维链指导（完整版）
+│   └── ...
+│
+├── 📂 worldbook-s/                  # 游戏设定文档（AI 提示词库 - 简化版，60% 压缩）
+│   ├── _index.md                   # 简化版导航索引
+│   ├── status.md                   # 状态系统 Schema（快速查阅版）
+│   ├── favor-system.md             # 好感度系统（速查表版）
+│   ├── moral-system.md             # 堕落度系统（速查表版）
+│   └── COT.md                      # 思维链指导（简化版）
 │
 ├── 📂 docs/                         # 项目文档
 │   ├── CONFIG_SYSTEM.md            # 配置系统详细说明
@@ -273,6 +283,29 @@ pnpm dev                # 开发服务器（热重载）
 ```
 
 ## 📖 详细文档
+
+### 🚀 Worldbook 文档库说明
+
+本项目提供两个版本的游戏设定文档库：
+
+**📚 `worldbooks/` - 完整版本（共 15 个文件，~20,000 tokens）**
+- 适用于：需要理解系统设计理由、详细背景说明、完整例子和用例
+- 用途：系统调整、文档维护、深度研究
+
+**📄 `worldbook-s/` - 简化版本（4 个核心文件，~600 tokens，压缩 60%）**
+- 适用于：AI 快速查阅核心规则、上下文 tokens 受限、需要速查表
+- 用途：实时游戏运行、LLM 推理、上下文优化
+- 推荐：作为首选的 worldbook 引用库
+
+**关键区别**：
+- `worldbook-s/status.md` - 仅保留 Schema 定义和关键约束
+- `worldbook-s/favor-system.md` - 仅保留阶段表格和变动因素列表
+- `worldbook-s/moral-system.md` - 仅保留阶段描述和变动因素表
+- `worldbook-s/COT.md` - 保留 7 步决策流程和简化示例
+
+详见：[worldbook-s/_index.md](./worldbook-s/_index.md)
+
+### 📋 文档列表
 
 | 文档 | 说明 |
 |------|------|

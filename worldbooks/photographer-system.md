@@ -55,7 +55,7 @@ filename: photographer-system.md
 
 堕落度: 每任务道德选择(边界+3~10 vs 正当) / 好感度: 关系任务直接影响、危机举报、装备不足-5  
 尺度: 摄影师堕落度 + 模特堕落度 / 报酬: 基础×难度×尺度×装备×声誉  
-装备: @equipment-requirements.md — 中高阶任务有门槛，可租赁临时满足
+装备: <equipment-requirements /> — 中高阶任务有门槛，可租赁临时满足
 
 ## 结局分支
 
