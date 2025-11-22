@@ -4,7 +4,10 @@ rule_key: 装备等级,模特体验,拍摄质量,装备验证
 version: 2
 rule_type: 强制规则
 rule_type_describe: 强制执行的游戏限制。装备水平直接影响模特体验、报酬和情感发展。
+filename: equipment-requirements.md
 ---
+
+<equipment-requirements>
 
 # 第一部分：器材等级与{{user}}的起点
 
@@ -14,11 +17,11 @@ rule_type_describe: 强制执行的游戏限制。装备水平直接影响模特
 
 ```yaml
 专业级清单:
-   机身: Canon EOS R6 (二手)
-   镜头: RF 50mm f/1.8 + RF 85mm f/2 MACRO IS STM
-   灯光: 神牛 Godox AD200 Pro × 2 + XPro-C 引闪器
-   配件: 背包、三脚架、灯架、高速SD卡、备用电池
-   后期: Dell Inspiron 16 Plus 笔记本
+  机身: Canon EOS R6 (二手)
+  镜头: RF 50mm f/1.8 + RF 85mm f/2 MACRO IS STM
+  灯光: 神牛 Godox AD200 Pro × 2 + XPro-C 引闪器
+  配件: 背包、三脚架、灯架、高速SD卡、备用电池
+  后期: Dell Inspiron 16 Plus 笔记本
 ```
 
 ---
@@ -39,6 +42,7 @@ rule_type_describe: 强制执行的游戏限制。装备水平直接影响模特
 # 第三部分：装备对模特的影响
 
 **专业级装备**
+
 - 模特初始好感度：+15（相比野路子+10）
 - 新手模特反应："您这装备挺讲究的，很认真呢。"
 - 专业模特拒绝理由：灯光不专(闪灯太简陋) / 焦段单一(没广角) / 后期差(笔记本配置低)
@@ -124,3 +128,5 @@ rule_type_describe: 强制执行的游戏限制。装备水平直接影响模特
 3. **强化现实**：专业工具≠颜值
 4. **策略选择**：资金分配(升级 vs 其他)决定发展方向
 5. **深度绑定**：装备与模特系统联动，影响好感、堕落、信任
+
+</equipment-requirements>

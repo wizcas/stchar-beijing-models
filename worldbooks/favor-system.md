@@ -4,7 +4,10 @@ rule_key: 好感度,情感态度,厌恶,中立,好感,亲密阶段,关系转变
 version: 2
 rule_type: 隐性规则
 rule_type_describe: 隐性规则，不直接出现对话中，仅作后台运算，体现在状态栏或角色行为，角色无法感知
+filename: favor-system.md
 ---
+
+<favor-system>
 
 # 基础设定
 
@@ -88,3 +91,5 @@ rule_type_describe: 隐性规则，不直接出现对话中，仅作后台运算
 厌恶(红色): 浅红(冷漠)→深红(死仇)
 中立(灰色): 0 值显示中立
 ```
+
+</favor-system>

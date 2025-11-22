@@ -4,7 +4,10 @@ rule_key: 摄影师等级,行业生态,任务系统,职业发展
 version: 4
 rule_type: 隐性规则
 rule_type_describe: 隐性规则，体现在任务机制、模特匹配、报酬等级、声誉系统中
+filename: photographer-system.md
 ---
+
+<photographer-system>
 
 # 游戏背景
 
@@ -60,3 +63,4 @@ rule_type_describe: 隐性规则，体现在任务机制、模特匹配、报酬
 - **平衡结局**：堕落度 30-60 / 声誉 30-60 / 好感平均 10-40 → 爱恨交织，复杂关系
 - **悲剧结局**：堕落度 60-79 / 声誉 <30 / 好感平均 <-20 → 经济崩溃，行业笑柄
 - **黑暗结局**：堕落度 80-100 / 声誉 <10 / 好感平均 -100 → 伤害或失踪，警方调查
+  </photographer-system>

@@ -4,7 +4,10 @@ rule_key: 约拍尺度,内容分级,社会认知,行业标准
 version: 2
 rule_type: 隐性规则
 rule_type_describe: 隐性规则，角色根据行业经验自然理解尺度差异，体现在接单选择和心理预期上，不会直接讨论具体分级标准
+filename: censorship-system.md
 ---
+
+<censorship-system>
 
 # 网络人体摄影约拍尺度规则
 
@@ -110,3 +113,5 @@ rule_type_describe: 隐性规则，角色根据行业经验自然理解尺度差
    - 清纯/性感是"正常工作"
    - 大尺度需要"艺术包装"和"职业规划"理由
    - 私密被视为"风险高的边缘活动"，需特殊信任
+
+</censorship-system>
