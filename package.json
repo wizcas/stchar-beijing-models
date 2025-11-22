@@ -1,13 +1,16 @@
 {
   "name": "status-dashboard",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "build": "node build.js",
     "build:prod": "node build.js --prod",
     "build:prod:debug": "node build.js --prod --no-minify",
     "dev": "node dev-server.js",
-    "config:build": "node build-config.js",
+    "config:build": "node build-config.js && node generate-test-data.js && node verify-and-complete.js",
     "config:verify": "node verify-config.js",
+    "test:data": "node generate-test-data.js",
+    "test:data:verify": "node verify-and-complete.js",
     "analyze:tokens": "node analyze-tokens.js",
     "analyze:tokens:verbose": "node analyze-tokens.js --verbose",
     "analyze:tokens:json": "node analyze-tokens.js --format json",

@@ -10,9 +10,14 @@
  * 3. 默认值是否符合类型约束
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * 验证 schema 中的字段定义
@@ -124,25 +129,25 @@ try {
     }
   }
 
-  // 验证用户部分
-  if (schema['{{user}}'] && schema['{{user}}'].fields) {
-    const userWarnings = validateSchema(schema['{{user}}'].fields, '{{user}}');
-    if (userWarnings.length === 0) {
-      const count = countFields(schema['{{user}}'].fields);
-      console.log(`   ✓ {{user}} 部分 (${count} 个字段)`);
+   // 验证用户部分
+   if (schema['user'] && schema['user'].fields) {
+     const userWarnings = validateSchema(schema['user'].fields, 'user');
+     if (userWarnings.length === 0) {
+       const count = countFields(schema['user'].fields);
+       console.log(`   ✓ user 部分 (${count} 个字段)`);
     } else {
       totalWarnings.push(...userWarnings);
     }
   }
 
-  // 验证女性角色部分
-  if (schema['女人'] && schema['女人'].fields) {
-    for (const [charName, charConfig] of Object.entries(schema['女人'].fields)) {
-      if (charConfig && charConfig.fields) {
-        const charWarnings = validateSchema(charConfig.fields, `女人.${charName}`);
-        if (charWarnings.length === 0) {
-          const count = countFields(charConfig.fields);
-          console.log(`   ✓ 女人.${charName} (${count} 个字段)`);
+    // 验证女模部分
+   if (schema['女模'] && schema['女模'].fields) {
+     for (const [charName, charConfig] of Object.entries(schema['女模'].fields)) {
+       if (charConfig && charConfig.fields) {
+         const charWarnings = validateSchema(charConfig.fields, `女模.${charName}`);
+         if (charWarnings.length === 0) {
+           const count = countFields(charConfig.fields);
+           console.log(`   ✓ 女模.${charName} (${count} 个字段)`);
         } else {
           totalWarnings.push(...charWarnings);
         }
@@ -172,7 +177,7 @@ try {
     if (charVar['状态栏']) {
       const worldData = charVar['状态栏']['世界'];
       const userData = charVar['状态栏']['小二'];
-      const womenData = charVar['状态栏']['女人'];
+       const womenData = charVar['状态栏']['女模'];
 
       let count = 0;
       if (worldData) count += Object.keys(worldData).length;

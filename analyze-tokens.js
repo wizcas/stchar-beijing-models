@@ -18,8 +18,13 @@
  *   --threshold <number>        只显示超过阈值的文件（token数）
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // 简易 token 计算器
 class TokenAnalyzer {

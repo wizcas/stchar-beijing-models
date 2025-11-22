@@ -194,7 +194,7 @@
     }
   }
 
-  /* 女性角色卡片高度限制和滚动效果 */
+   /* 女模卡片高度限制和滚动效果 */
   .woman-card-content {
     max-height: 350px;
     overflow-y: auto;
@@ -270,7 +270,7 @@
       @apply text-sm py-1.5;
     }
 
-    /* 减少女性角色卡片的滚动容器边距 */
+     /* 减少女模卡片的滚动容器边距 */
     .woman-card-scroll-container {
       max-height: 320px; /* 移动端稍微减少高度 */
     }

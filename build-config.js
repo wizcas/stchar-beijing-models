@@ -12,9 +12,14 @@
  * 4. 生成 data/status-vars.debug.json (无类型前缀，用于本地测试)
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * 从 yaml schema 中提取所有字段的默认值
@@ -32,12 +37,12 @@ function extractDefaults(fields) {
       // 嵌套对象：递归提取
       defaults[fieldName] = extractDefaults(fieldConfig.fields);
     } else {
-      // 无默认值：根据类型推断
-      if (fieldConfig.type === '$list') {
-        defaults[fieldName] = [];
-      } else if (fieldConfig.type && fieldConfig.type.startsWith('$range')) {
-        defaults[fieldName] = 0;
-      } else if (fieldConfig.type && fieldConfig.type.startsWith('$enum')) {
+     // 无默认值：根据类型推断
+       if (fieldConfig.type === '$list' || fieldConfig.type === '$grow') {
+         defaults[fieldName] = [];
+       } else if (fieldConfig.type && fieldConfig.type.startsWith('$range')) {
+         defaults[fieldName] = 0;
+       } else if (fieldConfig.type && fieldConfig.type.startsWith('$enum')) {
         // 枚举类型：使用第一个值
         const enumMatch = fieldConfig.type.match(/\$enum=\{([^}]+)\}/);
         if (enumMatch) {
@@ -167,7 +172,7 @@ try {
   // ========== 生成 status.json（含类型前缀，用于 Silly Tavern）==========
   const statusJson = {};
 
-  // 处理所有顶级字段（包括世界、{{user}}、女人等）
+  // 处理所有顶级字段（包括世界、{{user}}、女模等）
   for (const [sectionName, sectionConfig] of Object.entries(schema)) {
     if (!sectionConfig || typeof sectionConfig !== 'object') continue;
 
@@ -201,36 +206,34 @@ try {
     charVar['状态栏']['世界'] = buildPlainStructure(schema['世界'].fields, worldDefaults);
   }
 
-  // 添加用户信息
-  if (schema['{{user}}'] && schema['{{user}}'].fields) {
-    const userDefaults = extractDefaults(schema['{{user}}'].fields);
-    // 使用第一个用户的昵称作为 key，或默认为 "小二"
-    const userName = '小二';
-    charVar['状态栏'][userName] = buildPlainStructure(schema['{{user}}'].fields, userDefaults);
+   // 添加用户信息
+   if (schema['user'] && schema['user'].fields) {
+     const userDefaults = extractDefaults(schema['user'].fields);
+    // 使用默认的用户名作为 key，或默认为 "小二"
+      const userName = '小二';
+     charVar['状态栏'][userName] = buildPlainStructure(schema['user'].fields, userDefaults);
   }
 
-  // 添加女性角色
-  if (schema['女人'] && schema['女人'].fields) {
-    charVar['状态栏']['女人'] = {};
-    
-    // 检查是否有 {{key}} 模板字段
-    if (schema['女人'].fields['{{key}}']) {
-      // 使用模板字段的结构生成一个示例角色
-      const templateConfig = schema['女人'].fields['{{key}}'];
-      if (templateConfig.fields) {
-        const charDefaults = extractDefaults(templateConfig.fields);
-        const structuredData = buildPlainStructure(templateConfig.fields, charDefaults);
-        // 创建一个示例角色（保持原有的六花数据）
-        charVar['状态栏']['女人']['六花'] = {
-          ...structuredData,
-          昵称: "六花",
-          真名: "林六花",
-          想法: "第一次找专业摄影师拍照呢，好紧张……{{user}}哥哥会是个什么样的人呢？",
-          关系: {
-            ...structuredData.关系,
-            堕落度描述: "对自身有清晰的底线，坚定地保护自己，拒绝向{{user}}妥协。",
-            好感度描述: "与{{user}}陌生，保持基本的商业关系。"
-          },
+    // 添加女模
+   if (schema['女模'] && schema['女模'].fields) {
+     charVar['状态栏']['女模'] = {};
+     
+     // 检查是否有 {{key}} 模板字段
+     if (schema['女模'].fields['{{key}}']) {
+       // 使用模板字段的结构生成一个示例角色
+       const templateConfig = schema['女模'].fields['{{key}}'];
+       if (templateConfig.fields) {
+         const charDefaults = extractDefaults(templateConfig.fields);
+         const structuredData = buildPlainStructure(templateConfig.fields, charDefaults);
+         // 创建一个示例角色（保持原有的六花数据）
+          charVar['状态栏']['女模']['六花'] = {
+           ...structuredData,
+           想法: "第一次找专业摄影师拍照呢，好紧张……{{user}}哥哥会是个什么样的人呢？",
+           关系: {
+             ...structuredData.关系,
+             堕落度描述: "对自身有清晰的底线，坚定地保护自己，拒绝向{{user}}妥协。",
+             好感度描述: "与{{user}}陌生，保持基本的商业关系。"
+           },
           外型: {
             ...structuredData.外型,
             五官: "桃花眼，小鼻子，唇形微翘",
@@ -257,21 +260,77 @@ try {
           }
         };
       }
-    } else {
-      // 兼容旧版本：直接处理具体的角色字段
-      for (const [characterName, characterConfig] of Object.entries(schema['女人'].fields)) {
-        if (characterConfig && characterConfig.fields) {
-          const charDefaults = extractDefaults(characterConfig.fields);
-          charVar['状态栏']['女人'][characterName] = buildPlainStructure(characterConfig.fields, charDefaults);
-        }
+     } else {
+       // 兼容旧版本：直接处理具体的角色字段
+       for (const [characterName, characterConfig] of Object.entries(schema['女模'].fields)) {
+         if (characterConfig && characterConfig.fields) {
+           const charDefaults = extractDefaults(characterConfig.fields);
+           charVar['状态栏']['女模'][characterName] = buildPlainStructure(characterConfig.fields, charDefaults);
+         }
+       }
       }
-    }
-  }
+   }
 
-  // 写入 status-vars.debug.json
+   // 添加历史信息
+   if (schema['历史'] && schema['历史'].fields) {
+     charVar['状态栏']['历史'] = buildPlainStructure(schema['历史'].fields, extractDefaults(schema['历史'].fields));
+   }
+
+   // 写入 status-vars.debug.json
   const charVarPath = path.join(__dirname, 'data/status-vars.debug.json');
   fs.writeFileSync(charVarPath, JSON.stringify(charVar, null, 2) + '\n');
   console.log('✓ 已生成 data/status-vars.debug.json (无类型前缀，用于本地测试)');
+
+  // 添加测试数据到 debug 版本
+  console.log('🔧 添加测试数据...');
+  try {
+    // 确保基本数据结构存在
+    if (!charVar['状态栏']) {
+      throw new Error('基本的 status 数组结构必须存在');
+    }
+
+    // 添加出场女模数据和拍摄任务
+    charVar['状态栏']['世界']['出场女模'] = ['六花', 'Sakura'];
+
+    // 添加拍摄任务 (格式: 模特名--日期-时间)
+    charVar['状态栏']['小二']['拍摄任务'] = {
+      '六花--2024-12-20-1000': {
+        '状态': '进行中',
+        '模特': '六花',
+        '目标': '首次合作拍摄',
+        '期限': '2024-12-20',
+        '报酬': 1500,
+        '特殊要求': '可适当调整拍摄节奏',
+      },
+      'Sakura--2024-12-25-1400': {
+        '状态': '准备中',
+        '模特': 'Sakura',
+        '目标': '古典舞拍摄',
+        '期限': '2024-12-25',
+        '报酬': 1200,
+        '特殊要求': '可适当调整拍摄时间',
+      },
+      'Sakura--2024-12-28-1600': {
+        '状态': '已完成',
+        '模特': 'Sakura',
+        '目标': '艺术摄影',
+        '期限': '2024-12-28',
+        '报酬': 2200,
+        '特殊要求': '可进行艺术风格拍摄',
+      },
+      'Valentina--2024-12-30-1100': {
+        '状态': '待安排',
+        '模特': 'Valentina',
+        '目标': '广告风格拍摄',
+        '期限': '2024-12-30',
+        '报酬': 2800,
+      },
+    };
+
+    console.log('✓ 测试数据添加成功');
+  } catch (error) {
+    console.error('❌ 添加测试数据失败:', error.message);
+  }
 
   console.log('\n✓ 配置生成完成');
 

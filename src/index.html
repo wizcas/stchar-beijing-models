@@ -33,10 +33,10 @@
     <div class="max-w-[1400px] mx-auto md:p-3">
       <!-- 页面标题 -->
       <header class="text-center mb-3 mt-2">
-        <h1 class="page-title">
-          <span class="title-user" x-text="userName || '{{user}}'"></span>
-          <span class="title-text">摄影工作室</span>
-        </h1>
+         <h1 class="page-title">
+           <span class="title-user">{{user}}</span>
+           <span class="title-text">摄影工作室</span>
+         </h1>
         <!-- 时间和位置信息行 -->
         <div class="text-accent-silver text-sm mt-2 font-light tracking-wide" x-text="worldDateTime"></div>
         <!-- 天气信息独立一行，根据天气类型变色 -->
@@ -44,6 +44,18 @@
           <span x-text="worldWeatherEmoji"></span>
           <span x-text="worldWeatherText"></span>
         </div>
+        <!-- 出场女模信息行 -->
+        <template x-if="worldData?.世界?.出场女模 && worldData.世界.出场女模.length > 0">
+          <div class="text-accent-amber text-sm mt-1 font-light tracking-wide flex justify-center items-center gap-2">
+            <span class="text-accent-amber">👥</span>
+            <span class="text-accent-amber">当前出场女模:</span>
+            <template x-for="(character in worldData.世界.出场女模)" :key="character">
+              <span class="bg-accent-amber/20 text-accent-amber px-2 py-0.5 rounded-full text-xs font-medium">
+                <span x-text="character"></span>
+              </span>
+            </template>
+          </div>
+        </template>
       </header>
 
       <!-- 加载状态 -->
@@ -154,11 +166,11 @@
             ></div>
           </template>
 
-          <!-- 女性角色卡片 -->
-          <template
-            x-for="(characterData, characterName) in womanData"
-            :key="characterName"
-          >
+            <!-- 女模卡片 -->
+           <template
+             x-for="(characterData, characterName) in womanData"
+             :key="characterName"
+           >
             <div
               x-data="characterCard(characterData, characterName, 'woman')"
               x-html="renderCharacterCard()"

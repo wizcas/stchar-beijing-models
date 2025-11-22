@@ -3,7 +3,7 @@
 # 应用启动时从该文件读取并初始化所有状态
 
 世界:
-  description: "当前世界状态（时间、地点、天气）"
+  description: "当前世界状态（时间、地点、天气、当前出场的女模列表）"
   fields:
     时间:
       type: "string"
@@ -17,8 +17,12 @@
       type: "string"
       description: "当地的户外和环境天气描述，使用自然语言简略表述"
       default: "天色阴沉，空气寒冷刺鼻，但屋内的暖气把脸烤得红通通的。"
+    出场女模:
+      type: "$list"
+      description: "当前场景中出现的女模列表。**强调：每次输出，必须包含此字段**，使用 '记下' 操作设定"
+      default: []
 
-"{{user}}":
+"user":
   description: "玩家角色（摄影师）"
   fields:
     行业等级:
@@ -98,137 +102,136 @@
           default:
             - "Dell Inspiron 16 Plus 笔记本电脑"
 
-女人:
+女模:
   type: "$free"
-  description: "女性角色数据集合，支持动态添加新角色"
+  description: "女模数据集合，支持动态添加新角色。key作为角色唯一名字标识"
   fields:
     "{{key}}":
       type: "object"
-      description: "单个女性角色数据，key为角色名称"
-      required_fields: ["昵称", "真名"]
-      fields:
-        昵称:
-          type: "$ro"
-          description: "角色昵称（只读）"
-          default: ""
-        真名:
-          type: "$ro"
-          description: "角色真名（只读）"
-          default: ""
-        想法:
-          type: "string"
-          description: "角色当前的内心想法"
-          default: ""
-        关系:
-          type: "object"
-          description: "与摄影师的关系数据"
-          fields:
-            堕落度:
-              type: "$range=[0,100]"
-              description: "角色的道德堕落程度（0为坚守底线，100为无底线）"
-              default: 0
-            堕落度描述:
-              type: "string"
-              description: "根据堕落度范围生成的沉浸式描述，反映模特的心理状态"
-              default: ""
-            好感度:
-              type: "$range=[-100,100]"
-              description: "对摄影师的好感度（-100为仇恨，100为深爱）"
-              default: 0
-            好感度描述:
-              type: "string"
-              description: "根据好感度范围生成的沉浸式描述，反映与摄影师的关系深度"
-              default: ""
-        外型:
-          type: "object"
-          description: "角色的外观描述"
-          fields:
-            五官:
-              type: "string"
-              description: "五官特征描述"
-              default: ""
-            发型:
-              type: "string"
-              description: "发型描述"
-              default: ""
-            穿搭:
-              type: "string"
-              description: "服装和穿着描述"
-              default: ""
-            身高:
-              type: "$range=[100,250]"
-              description: "身高（单位：cm）"
-              default: 160
-            体重:
-              type: "$range=[30,150]"
-              description: "体重（单位：kg）"
-              default: 50
-            胸围:
-              type: "$range=[60,120]"
-              description: "胸围（单位：cm）"
-              default: 80
-            腰围:
-              type: "$range=[40,120]"
-              description: "腰围（单位：cm）"
-              default: 60
-            臀围:
-              type: "$range=[60,120]"
-              description: "臀围（单位：cm）"
-              default: 85
-            罩杯:
-              type: "string"
-              description: "胸部罩杯大小"
-              default: "A"
-        职业:
-          type: "object"
-          description: "角色的职业信息"
-          fields:
-            类型:
-              type: "$list"
-              description: "职业类型列表"
-              default: []
-            层级:
-              type: "$enum={新手;进阶;专业}"
-              description: "模特等级"
-              default: "新手"
-            方向:
-              type: "$enum={专业;多元;退出;卖身}"
-              description: "模特方向/路线"
-              default: "多元"
-            尺度:
-              type: "$enum={清纯;性感;大尺度;私密}"
-              description: "可接受的内容尺度"
-              default: "清纯"
-            人设:
-              type: "$list"
-              description: "角色人设标签列表"
-              default: []
-        性爱:
-          type: "object"
-          description: "角色的性爱状态数据"
-          fields:
-            性癖:
-              type: "$list"
-              description: "性癖好列表"
-              default: []
-            性经验次数:
-              type: "$range=[0,10000]"
-              description: "性经验次数"
-              default: 0
-            动情程度:
-              type: "$range=[0,100]"
-              description: "当前的动情/兴奋程度（0为冷静，100为极度兴奋）"
-              default: 0
-            乳房:
-              type: "string"
-              description: "乳房和乳头的当前状态、外观、敏感度等，与性癖和动情程度挂钩"
-              default: ""
-            小穴:
-              type: "string"
-              description: "小穴和阴道当前的状态，如外观、湿润程度、内部情况等，与性癖和动情程度挂钩"
-              default: ""
+      description: "单个女模数据，key为角色名称（唯一标识）"
+      required_fields: []
+      想法:
+        type: "string"
+        description: "角色当前的内心想法"
+        default: ""
+      关系:
+        type: "object"
+        description: "与摄影师的关系数据"
+        fields:
+          堕落度:
+            type: "$range=[0,100]"
+            description: "角色的道德堕落程度（0为坚守底线，100为无底线）"
+            default: 0
+          堕落度描述:
+            type: "string"
+            description: "根据堕落度范围生成的沉浸式描述，反映模特的心理状态"
+            default: ""
+          好感度:
+            type: "$range=[-100,100]"
+            description: "对摄影师的好感度（-100为仇恨，100为深爱）"
+            default: 0
+          好感度描述:
+            type: "string"
+            description: "根据好感度范围生成的沉浸式描述，反映与摄影师的关系深度"
+            default: ""
+      外型:
+        type: "object"
+        description: "角色的外观描述"
+        fields:
+          五官:
+            type: "string"
+            description: "五官特征描述"
+            default: ""
+          发型:
+            type: "string"
+            description: "发型描述"
+            default: ""
+          穿搭:
+            type: "string"
+            description: "服装和穿着描述"
+            default: ""
+          身高:
+            type: "$range=[168,178]"
+            description: "身高（单位：cm）"
+            default: 160
+          体重:
+            type: "$range=[48,58]"
+            description: "体重（单位：kg）"
+            default: 50
+          胸围:
+            type: "$range=[83,90]"
+            description: "胸围（单位：cm）"
+            default: 80
+          腰围:
+            type: "$range=[58,64]"
+            description: "腰围（单位：cm）"
+            default: 60
+          臀围:
+            type: "$range=[88,95]"
+            description: "臀围（单位：cm）"
+            default: 85
+          罩杯:
+            type: "string"
+            description: "胸部罩杯大小"
+            default: "A"
+      职业:
+        type: "object"
+        description: "角色的职业信息"
+        fields:
+          类型:
+            type: "$list"
+            description: "职业类型列表"
+            default: []
+          层级:
+            type: "$enum={新手;进阶;专业}"
+            description: "模特等级"
+            default: "新手"
+          方向:
+            type: "$enum={专业;多元;退出;卖身}"
+            description: "模特方向/路线"
+            default: "多元"
+          尺度:
+            type: "$enum={清纯;性感;大尺度;私密}"
+            description: "可接受的内容尺度"
+            default: "清纯"
+          人设:
+            type: "$list"
+            description: "角色人设标签列表"
+            default: []
+      性爱:
+        type: "object"
+        description: "角色的性爱状态数据"
+        fields:
+          性癖:
+            type: "$list"
+            description: "性癖好列表"
+            default: []
+          性经验次数:
+            type: "$range=[0,10000]"
+            description: "性经验次数"
+            default: 0
+          动情程度:
+            type: "$range=[0,100]"
+            description: "当前的动情/兴奋程度（0为冷静，100为极度兴奋）"
+            default: 0
+          乳房:
+            type: "string"
+            description: "乳房和乳头的当前状态、外观、敏感度等，与性癖和动情程度挂钩"
+            default: ""
+          小穴:
+            type: "string"
+            description: "小穴和阴道当前的状态，如外观、湿润程度、内部情况等，与性癖和动情程度挂钩"
+            default: ""
             肛门:
               type: "string"
               description: "菊花内外的状态，如外观、紧致程度、敏感度等，与性癖和动情程度挂钩"
               default: ""
   default: {}
+
+历史:
+  description: "记录游戏中发生过的事件和角色，用于追踪剧情历史"
+  fields:
+    女模:
+      type: "$grow"
+      description: "所有曾经出现过的女模角色名单，动态增长数组。新女模首次登场时追加，重复出现不再追加"
+      default: []

@@ -14,32 +14,10 @@ import { cleanFieldName } from './formatters.js';
  */
 export function getCardTitle(characterName, characterType, characterData) {
   if (characterType === 'user') {
-    return `👤 ${characterName}`;
+    return `👤 {{user}}`;
   } else if (characterType === 'woman') {
-    // 查找昵称和真名
-    let nickname = null;
-    let realName = null;
-
-    // 遍历所有字段查找昵称和真名
-    for (const [key, value] of Object.entries(characterData)) {
-      const cleanKey = cleanFieldName(key);
-      if (cleanKey === '昵称') {
-        nickname = value;
-      } else if (cleanKey === '真名') {
-        realName = value;
-      }
-    }
-
-    // 根据找到的信息生成标题
-    if (nickname && realName) {
-      return `👩 ${nickname} (${realName})`;
-    } else if (nickname) {
-      return `👩 ${nickname}`;
-    } else if (realName) {
-      return `👩 ${realName}`;
-    } else {
-      return `👩 ${characterName}`;
-    }
+    // 只使用 key 作为角色名字
+    return `👩 ${characterName}`;
   }
   return characterName;
 }

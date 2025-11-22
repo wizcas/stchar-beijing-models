@@ -26,6 +26,7 @@ import {
   cleanFieldName,
   getFieldDisplayValue,
   processSpecialFields,
+  withTimeout,
 } from "./utils/formatters.js";
 import {
   shouldHideField,
@@ -72,6 +73,9 @@ function statusApp() {
         // 处理数据
         this.processData(data);
 
+        // 处理数据后过滤女模
+        this.updateFilteredWomanData();
+
         this.loading = false;
         console.log("✓ Alpine.js 状态栏渲染完成");
       } catch (err) {
@@ -80,6 +84,28 @@ function statusApp() {
         this.errorMessage = getErrorMessage(err);
         this.loading = false;
       }
+    },
+
+    // 更新过滤后的女模数据
+    updateFilteredWomanData() {
+      // 获取出场女模列表，确保是数组格式
+      const appearedWomen = Array.isArray(this.worldData?.出场女模)
+        ? this.worldData.出场女模
+        : [];
+
+      // 如果出场女模列表为空，不显示任何女模卡片
+      if (appearedWomen.length === 0) {
+        this.womanData = {};
+        return;
+      }
+
+      // 过滤 womanData，只保留在出场女模列表中的角色 (使用 Set 优化性能)
+      const appearedSet = new Set(appearedWomen);
+      const filtered = Object.fromEntries(
+        Object.entries(this.womanData)
+          .filter(([name]) => appearedSet.has(name))
+      );
+      this.womanData = filtered;
     },
 
     // 处理数据
@@ -103,17 +129,33 @@ function statusApp() {
         }
       }
 
-      // 处理女性角色数据
+      // 处理女模数据
       const womanKey = DATA_LOADING.WOMAN_SECTION_KEY;
       if (data[womanKey]) {
-        const processedWomanData = {};
-        for (const [characterName, characterData] of Object.entries(
-          data[womanKey],
-        )) {
-          processedWomanData[characterName] =
-            this.processCharacterData(characterData);
+        // 验证女模数据是否为对象格式
+        if (typeof data[womanKey] !== "object" || Array.isArray(data[womanKey])) {
+          console.warn(`⚠️ 女模数据格式错误，期望对象格式，收到：${typeof data[womanKey]}`);
+          this.womanData = {};
+        } else {
+          const processedWomanData = {};
+          try {
+            for (const [characterName, characterData] of Object.entries(
+              data[womanKey],
+            )) {
+              // 验证每个女模的数据有效性
+              if (typeof characterData === "object" && characterData !== null) {
+                processedWomanData[characterName] =
+                  this.processCharacterData(characterData);
+              } else {
+                console.warn(`⚠️ 女模"${characterName}"的数据格式无效`);
+              }
+            }
+            this.womanData = processedWomanData;
+          } catch (error) {
+            console.error(`❌ 处理女模数据失败：${error.message}`);
+            this.womanData = {};
+          }
         }
-        this.womanData = processedWomanData;
       }
     },
 
@@ -167,10 +209,10 @@ function statusApp() {
     // 任务列表排序：状态优先级 > 截止日期 > 报酬 > 模特名字
     sortTaskList() {
       const statusPriority = {
-        "进行中": 0,
-        "未开始": 1,
-        "已完成": 2,
-        "已取消": 3,
+        进行中: 0,
+        未开始: 1,
+        已完成: 2,
+        已取消: 3,
       };
 
       this.taskList.sort((a, b) => {
@@ -182,8 +224,11 @@ function statusApp() {
         }
 
         // 2. 同一状态下，按截止日期正序排序
-        const dateA = new Date(a.期限).getTime();
-        const dateB = new Date(b.期限).getTime();
+        const dateA = new Date(a.期限).getTime() || 0;
+        const dateB = new Date(b.期限).getTime() || 0;
+        if (isNaN(dateA) || isNaN(dateB)) {
+          console.warn("⚠️ 任务期限格式错误", { a, b });
+        }
         if (dateA !== dateB) {
           return dateA - dateB;
         }
@@ -363,70 +408,85 @@ function statusApp() {
 
     // 删除拍摄任务 - 二次确认机制
     async deleteTask(taskId) {
+      if (!taskId) {
+        console.error("❌ 任务ID无效");
+        return;
+      }
+
+      // 检查是否是第一次点击（需要确认）
+      if (this.pendingDeleteTaskId !== taskId) {
+        console.log(`⚠️ 待删除任务: ${taskId}，请再次点击确认`);
+        this.pendingDeleteTaskId = taskId;
+        // 2秒后自动取消确认状态
+        setTimeout(() => {
+          if (this.pendingDeleteTaskId === taskId) {
+            this.pendingDeleteTaskId = null;
+            console.log(`ℹ️ 删除确认已取消: ${taskId}`);
+          }
+        }, 3000);
+        return;
+      }
+
+      // 第二次点击，执行删除
+      console.log(`🗑️ 删除任务: ${taskId}`);
+
+      // 调用 STScript 执行删除操作
+      if (typeof STscript === "undefined") {
+        console.error("❌ STScript API 不可用");
+        return;
+      }
+
       try {
-        if (!taskId) {
-          console.error("❌ 任务ID无效");
-          return;
-        }
-
-        // 检查是否是第一次点击（需要确认）
-        if (this.pendingDeleteTaskId !== taskId) {
-          console.log(`⚠️ 待删除任务: ${taskId}，请再次点击确认`);
-          this.pendingDeleteTaskId = taskId;
-          // 2秒后自动取消确认状态
-          setTimeout(() => {
-            if (this.pendingDeleteTaskId === taskId) {
-              this.pendingDeleteTaskId = null;
-              console.log(`ℹ️ 删除确认已取消: ${taskId}`);
-            }
-          }, 3000);
-          return;
-        }
-
-        // 第二次点击，执行删除
-        console.log(`🗑️ 删除任务: ${taskId}`);
-
-        // 调用 STScript 执行删除操作
-        if (typeof STscript !== "undefined") {
-          // 1. 获取当前的拍摄任务对象
-          const tasksJsonStr = await STscript(
-            `/xbgetvar 状态栏.{{user}}.拍摄任务`,
-          );
-          console.log({ tasksJsonStr });
-          const tasksData =
+        // 1. 获取当前的拍摄任务对象 (添加超时保护)
+        const tasksJsonStr = await withTimeout(
+          STscript(`/xbgetvar 状态栏.user.拍摄任务`),
+          5000,
+          '获取拍摄任务 API 超时'
+        );
+        console.log({ tasksJsonStr });
+        
+        let tasksData;
+        try {
+          tasksData =
             typeof tasksJsonStr === "string"
               ? JSON.parse(tasksJsonStr)
               : tasksJsonStr;
-
-          if (!tasksData || typeof tasksData !== "object") {
-            console.error("❌ 无法获取拍摄任务数据");
-            this.pendingDeleteTaskId = null;
-            return;
-          }
-
-          // 2. 从拍摄任务对象中删除对应的key
-          delete tasksData[taskId];
-          console.log(`✓ 从对象中删除任务key: ${taskId}`);
-
-          // 3. 将修改后的拍摄任务对象重新设置回酒馆
-          const updatedTasksJson = JSON.stringify(tasksData);
-          console.log({ tasksData, updatedTasksJson });
-          await STscript(
-            `/xbsetvar key="$free 状态栏.{{user}}.拍摄任务" ${updatedTasksJson}`,
-          );
-          console.log("✓ 任务删除成功，已更新到酒馆");
-
-          // 从本地任务列表中移除
-          this.taskList = this.taskList.filter(
-            (task) => task._taskId !== taskId,
-          );
-          // 清除待删除状态
+        } catch (error) {
+          console.error("❌ 任务数据 JSON 解析失败:", error);
           this.pendingDeleteTaskId = null;
-        } else {
-          console.error("❌ STScript API 不可用");
+          return;
         }
+
+        if (!tasksData || typeof tasksData !== "object") {
+          console.error("❌ 无法获取拍摄任务数据");
+          this.pendingDeleteTaskId = null;
+          return;
+        }
+
+        // 2. 从拍摄任务对象中删除对应的key
+        delete tasksData[taskId];
+        console.log(`✓ 从对象中删除任务key: ${taskId}`);
+
+        // 3. 将修改后的拍摄任务对象重新设置回酒馆
+        const updatedTasksJson = JSON.stringify(tasksData);
+        console.log({ tasksData, updatedTasksJson });
+        await withTimeout(
+          STscript(
+            `/xbsetvar key="$free 状态栏.user.拍摄任务" ${updatedTasksJson}`,
+          ),
+          5000,
+          '更新拍摄任务 API 超时'
+        );
+        console.log("✓ 任务删除成功，已更新到酒馆");
+
+        // 从本地任务列表中移除
+        this.taskList = this.taskList.filter(
+          (task) => task._taskId !== taskId,
+        );
+        // 清除待删除状态
+        this.pendingDeleteTaskId = null;
       } catch (error) {
-        console.error("❌ 删除任务失败:", error);
+        console.error("❌ 删除任务失败:", error.message || error);
         this.pendingDeleteTaskId = null;
       }
     },

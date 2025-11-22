@@ -5,9 +5,14 @@
  * 用法: node copy-html.js
  */
 
-const fs = require("fs");
-const path = require("path");
-const { spawnSync } = require("child_process");
+import fs from "fs";
+import path from "path";
+import { spawnSync } from "child_process";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // 定义 HTML 文件路径
 const htmlPath = path.join(__dirname, "build", "status.html");

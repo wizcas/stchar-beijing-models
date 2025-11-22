@@ -5,9 +5,14 @@
  * 用法: node copy-status.js
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync, spawnSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync, spawnSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // 读取 status.json
 const statusPath = path.join(__dirname, 'data', 'status.json');

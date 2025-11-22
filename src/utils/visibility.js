@@ -5,6 +5,7 @@
 
 import { shouldShowIntimacySection, INTIMACY_VISIBILITY_CONFIG } from '../renderer.js';
 import { cleanFieldName } from './formatters.js';
+import { SECTION_NAMES } from '../modules/constants.js';
 
 /**
  * 检查字段是否应该隐藏
@@ -15,13 +16,8 @@ import { cleanFieldName } from './formatters.js';
 export function shouldHideField(fieldName, sectionName) {
   const cleanName = cleanFieldName(fieldName);
 
-  // 隐藏昵称和真名字段（它们显示在卡片标题中）
-  if (cleanName === "昵称" || cleanName === "真名") {
-    return true;
-  }
-
   // 隐藏性爱部分的动情程度字段
-  if (sectionName === "性爱" && cleanName === "动情程度") {
+  if (sectionName === SECTION_NAMES.INTIMACY && cleanName === "动情程度") {
     return true;
   }
 
@@ -44,8 +40,13 @@ export function shouldShowIntimacy(characterData) {
 
 /**
  * 获取性爱部分占位符文本
+ * @param {string} userName - 用户名，用于替换占位符
  * @returns {string} 占位符文本
  */
-export function getIntimacyPlaceholder() {
-  return INTIMACY_VISIBILITY_CONFIG.placeholderText;
+export function getIntimacyPlaceholder(userName = null) {
+  const placeholder = INTIMACY_VISIBILITY_CONFIG.placeholderText;
+  if (userName && placeholder.includes('{{user}}')) {
+    return placeholder.replace(/\{\{user\}\}/g, userName);
+  }
+  return placeholder;
 }

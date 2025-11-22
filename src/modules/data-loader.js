@@ -10,6 +10,7 @@ import {
   isValidStatusData,
   AppError,
 } from './data-validator.js';
+import { withTimeout } from '../utils/formatters.js';
 
 /**
  * 使用 API 从生产环境加载状态数据
@@ -19,8 +20,12 @@ import {
  */
 async function loadStatusData() {
   try {
-    // 调用外部 STscript API
-    const raw = await STscript(API_ENDPOINTS.GET_STATUS);
+    // 调用外部 STscript API，添加超时保护（5秒）
+    const raw = await withTimeout(
+      STscript(API_ENDPOINTS.GET_STATUS),
+      5000,
+      'STscript API 超时（5秒）'
+    );
     const statusData = typeof raw === 'string' ? JSON.parse(raw) : raw;
     
     if (!isValidStatusData(statusData)) {

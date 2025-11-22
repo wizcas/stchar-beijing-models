@@ -1,6 +1,11 @@
-const esbuild = require("esbuild");
-const fs = require("fs");
-const path = require("path");
+import esbuild from "esbuild";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // ==================== 代码生成模块 ====================
 // 从 config.json 生成源代码
@@ -93,7 +98,7 @@ function generateFieldsModule(config) {
   code += `  const hasUserFields = userFields.some(\n`;
   code += `    (field) => sectionData && sectionData.hasOwnProperty(field),\n`;
   code += `  );\n\n`;
-  code += `  // 检查是否包含女性角色特有字段\n`;
+  code += `  // 检查是否包含女模特有字段\n`;
   code += `  const womanFields = [${womanFields.map((f) => `"${f}"`).join(", ")}];\n`;
   code += `  const hasWomanFields = womanFields.some(\n`;
   code += `    (field) => sectionData && sectionData.hasOwnProperty(field),\n`;
@@ -122,7 +127,7 @@ function generateFieldsModule(config) {
   code += `    case "user":\n`;
   code += `      return fieldOrder["{{user}}"];\n`;
   code += `    case "woman":\n`;
-  code += `      return fieldOrder["女人"];\n`;
+  code += `      return fieldOrder["女模"];\n`;
   code += `    case "system":\n`;
   code += `      // 对于系统分类，尝试使用对应的配置\n`;
   code += `      if (fieldOrder[sectionName]) {\n`;
@@ -145,7 +150,7 @@ function generateFieldsModule(config) {
   code += `    case "user":\n`;
   code += `      return fieldOrderSets["{{user}}"] || new Set(fieldOrder["{{user}}"]);\n`;
   code += `    case "woman":\n`;
-  code += `      return fieldOrderSets["女人"] || new Set(fieldOrder["女人"]);\n`;
+  code += `      return fieldOrderSets["女模"] || new Set(fieldOrder["女模"]);\n`;
   code += `    case "system":\n`;
   code += `      if (fieldOrderSets[sectionName]) {\n`;
   code += `        return fieldOrderSets[sectionName];\n`;
@@ -199,7 +204,8 @@ function generateSourceFiles() {
     return config;
   } catch (error) {
     console.error("❌ Code generation failed:", error.message);
-    throw error;
+    console.error("错误详情:", error);
+    process.exit(1);
   }
 }
 

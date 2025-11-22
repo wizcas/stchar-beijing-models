@@ -19,17 +19,7 @@ import {
   EQUIPMENT_KEYWORDS,
   EQUIPMENT_CATEGORIES,
 } from "./modules/constants.js";
-
-/**
- * 处理字段名，移除所有 $ 开始的前缀
- * @param {string} fieldName - 原始字段名
- * @returns {string} 清理后的字段名
- */
-function cleanFieldName(fieldName) {
-  // 匹配所有以$开始的前缀，直到遇到空格，然后获取空格后的内容
-  const match = fieldName.match(/^\$[^\s]*\s+(.+)$/);
-  return match ? match[1] : fieldName;
-}
+import { cleanFieldName, processSpecialFields } from "./utils/formatters.js";
 
 /**
  * 通用 DOM 元素创建函数
@@ -213,8 +203,13 @@ function createMasonryGrid(containerClass = CSS_CLASSES.SUBSECTIONS_MASONRY) {
     }, 150);
   }
 
+  // MutationObserver 防抖处理，避免频繁触发导致性能问题
+  let mutationTimeout;
   const observer = new MutationObserver(() => {
-    relayout();
+    clearTimeout(mutationTimeout);
+    mutationTimeout = setTimeout(() => {
+      relayout();
+    }, 100);
   });
 
   function initialize() {
@@ -282,7 +277,7 @@ function updateScrollMask(container, content) {
 }
 
 /**
- * 创建女性角色卡片滚动容器
+ * 创建女模卡片滚动容器
  * @param {HTMLElement} content - 内容元素
  * @returns {HTMLElement} 滚动容器元素
  */
@@ -339,73 +334,11 @@ function generateCardTitle(sectionName, sectionData) {
   const characterType = detectCharacterType(sectionName, sectionData);
 
   if (characterType === "woman" && sectionData) {
-    // 查找昵称和全名
-    const nickname =
-      sectionData[SPECIAL_FIELDS.NICKNAME] || sectionData["nickname"];
-    const fullName =
-      sectionData[SPECIAL_FIELDS.REAL_NAME] ||
-      sectionData[SPECIAL_FIELDS.FULL_NAME] ||
-      sectionData[SPECIAL_FIELDS.SURNAME] ||
-      sectionData[SPECIAL_FIELDS.NAME];
-
-    if (nickname && fullName) {
-      return `${nickname} (${fullName})`;
-    } else if (nickname) {
-      return nickname;
-    } else if (fullName) {
-      return fullName;
-    }
+    // 只使用 sectionName 作为角色名字，不再查找昵称和真名
+    return sectionName;
   }
 
   return sectionName;
-}
-
-/**
- * 处理特殊字段合并和格式化
- * @param {Object} obj - 原始数据对象
- * @returns {Object} 处理后的数据对象
- */
-function processSpecialFields(obj) {
-  const processed = { ...obj };
-
-  // 处理昵称和真名合并
-  if (
-    processed[SPECIAL_FIELDS.NICKNAME] &&
-    processed[SPECIAL_FIELDS.REAL_NAME]
-  ) {
-    const nickname = processed[SPECIAL_FIELDS.NICKNAME];
-    const realName = processed[SPECIAL_FIELDS.REAL_NAME];
-    processed[SPECIAL_FIELDS.NAME] = `${nickname} (${realName})`;
-    delete processed[SPECIAL_FIELDS.NICKNAME];
-    delete processed[SPECIAL_FIELDS.REAL_NAME];
-  }
-
-  // 处理三围合并
-  if (
-    processed[SPECIAL_FIELDS.BUST] &&
-    processed[SPECIAL_FIELDS.WAIST] &&
-    processed[SPECIAL_FIELDS.HIP]
-  ) {
-    const bust = processed[SPECIAL_FIELDS.BUST];
-    const waist = processed[SPECIAL_FIELDS.WAIST];
-    const hip = processed[SPECIAL_FIELDS.HIP];
-    processed[SPECIAL_FIELDS.MEASUREMENTS] = `${bust}-${waist}-${hip} cm`;
-    delete processed[SPECIAL_FIELDS.BUST];
-    delete processed[SPECIAL_FIELDS.WAIST];
-    delete processed[SPECIAL_FIELDS.HIP];
-  }
-
-  // 处理身高单位
-  if (processed[SPECIAL_FIELDS.HEIGHT]) {
-    processed[SPECIAL_FIELDS.HEIGHT] = processed[SPECIAL_FIELDS.HEIGHT] + " cm";
-  }
-
-  // 处理体重单位
-  if (processed[SPECIAL_FIELDS.WEIGHT]) {
-    processed[SPECIAL_FIELDS.WEIGHT] = processed[SPECIAL_FIELDS.WEIGHT] + " kg";
-  }
-
-  return processed;
 }
 
 /**
@@ -540,7 +473,7 @@ function createCollapsibleCard(
     isCollapsed = !isCollapsed;
     updateVisibility();
 
-    // 检查是否有女性角色卡片滚动容器，更新其遮罩状态
+     // 检查是否有女模卡片滚动容器，更新其遮罩状态
     const scrollContainer = contentContainer.querySelector(
       ".woman-card-scroll-container",
     );
