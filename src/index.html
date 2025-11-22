@@ -55,10 +55,31 @@
               </span>
             </template>
           </div>
-        </template>
-      </header>
+         </template>
+       </header>
 
-      <!-- 加载状态 -->
+       <!-- 推进选项网格面板 - 在天气下方 -->
+       <template x-if="advanceOptions && advanceOptions.length > 0">
+         <div class="bg-surface-primary border border-border-subtle rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-3 mt-3">
+           <h2 class="text-accent-cyan font-semibold text-md tracking-wide mb-3">🎯 推进选项</h2>
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <template x-for="(option, index) in advanceOptions" :key="'advance-' + index">
+                <div @click="handleAdvanceOptionClick(option, index)" class="bg-surface-black/50 border border-border-subtle rounded-[var(--radius-element)] p-3 cursor-pointer hover:bg-surface-black/70 transition-colors duration-200 group">
+                 <div class="flex items-start gap-3">
+                   <span class="text-2xl" x-text="option.emoji || '😐'" style="min-width: 28px; text-align: center;"></span>
+                   <div class="flex-1">
+                     <div class="text-sm font-light text-text-primary" x-text="option.选项"></div>
+                     <div class="mt-2">
+                       <span class="text-xs font-medium px-2 py-1 rounded" :class="option.方向 === '积极' ? 'bg-accent-green/20 text-accent-green' : 'bg-accent-red/20 text-accent-red'" x-text="option.方向"></span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </template>
+           </div>
+         </div>
+       </template>
+
       <div x-show="loading" class="text-center py-8 text-text-muted">
         正在加载状态数据...
       </div>

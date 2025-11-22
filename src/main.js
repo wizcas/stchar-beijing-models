@@ -45,21 +45,22 @@ import {
  */
 function statusApp() {
   return {
-    // 状态数据
-    loading: true,
-    error: false,
-    errorMessage: "",
-    userName: null,
-    userData: null,
-    womanData: {},
-    worldData: null,
-    taskList: [],
-    taskListCollapsed: true,
-    pendingDeleteTaskId: null, // 待确认删除的任务 ID
-    worldDateTime: "",
-    worldWeatherColor: "text-accent-silver",
-    worldWeatherEmoji: "⛅️",
-    worldWeatherText: "",
+     // 状态数据
+     loading: true,
+     error: false,
+     errorMessage: "",
+     userName: null,
+     userData: null,
+     womanData: {},
+     worldData: null,
+     taskList: [],
+     advanceOptions: [], // 推进选项
+     taskListCollapsed: true,
+     pendingDeleteTaskId: null, // 待确认删除的任务 ID
+     worldDateTime: "",
+     worldWeatherColor: "text-accent-silver",
+     worldWeatherEmoji: "⛅️",
+     worldWeatherText: "",
 
     // 初始化函数
     async init() {
@@ -114,6 +115,16 @@ function statusApp() {
       if (data["世界"]) {
         this.worldData = data["世界"];
         this.formatWorldInfo();
+      }
+
+      // 处理推进选项
+      if (data["推进选项"]) {
+        if (Array.isArray(data["推进选项"])) {
+          this.advanceOptions = data["推进选项"];
+        } else {
+          console.warn("⚠️ 推进选项格式应为数组");
+          this.advanceOptions = [];
+        }
       }
 
       // 查找用户数据
@@ -491,43 +502,132 @@ function statusApp() {
       }
     },
 
-    // 获取任务状态的显示信息（文字、颜色、emoji）
-    getTaskStatusDisplay(status) {
-      const statusMap = {
-        未开始: {
-          emoji: "⏳",
-          text: "未开始",
-          bgClass: "bg-gray-700/40",
-          textClass: "text-gray-300",
-          borderClass: "border-gray-600/50",
-        },
-        进行中: {
-          emoji: "⚙️",
-          text: "进行中",
-          bgClass: "bg-blue-700/40",
-          textClass: "text-blue-300",
-          borderClass: "border-blue-600/50",
-        },
-        已完成: {
-          emoji: "✅",
-          text: "已完成",
-          bgClass: "bg-green-700/40",
-          textClass: "text-green-300",
-          borderClass: "border-green-600/50",
-        },
-        已取消: {
-          emoji: "❌",
-          text: "已取消",
-          bgClass: "bg-orange-700/40",
-          textClass: "text-orange-300",
-          borderClass: "border-orange-600/50",
-        },
-      };
+     // 获取任务状态的显示信息（文字、颜色、emoji）
+     getTaskStatusDisplay(status) {
+       const statusMap = {
+         未开始: {
+           emoji: "⏳",
+           text: "未开始",
+           bgClass: "bg-gray-700/40",
+           textClass: "text-gray-300",
+           borderClass: "border-gray-600/50",
+         },
+         进行中: {
+           emoji: "⚙️",
+           text: "进行中",
+           bgClass: "bg-blue-700/40",
+           textClass: "text-blue-300",
+           borderClass: "border-blue-600/50",
+         },
+         已完成: {
+           emoji: "✅",
+           text: "已完成",
+           bgClass: "bg-green-700/40",
+           textClass: "text-green-300",
+           borderClass: "border-green-600/50",
+         },
+         已取消: {
+           emoji: "❌",
+           text: "已取消",
+           bgClass: "bg-orange-700/40",
+           textClass: "text-orange-300",
+           borderClass: "border-orange-600/50",
+         },
+       };
 
-      return statusMap[status] || statusMap["未开始"];
-    },
-  };
-}
+       return statusMap[status] || statusMap["未开始"];
+     },
+
+     // 处理推进选项点击事件
+     async handleAdvanceOptionClick(option, index) {
+       if (!option || !option.选项) {
+         console.error("❌ 选项内容无效");
+         return;
+       }
+
+       try {
+         const optionText = option.选项;
+         console.log(`📋 点击推进选项 ${index + 1}: ${optionText}`);
+
+         // 1. 复制选项文本到剪贴板
+         if (navigator.clipboard && navigator.clipboard.writeText) {
+           try {
+             await navigator.clipboard.writeText(optionText);
+             console.log(`✓ 选项文本已复制到剪贴板: "${optionText}"`);
+           } catch (clipboardError) {
+             console.warn("⚠️ 剪贴板复制失败，尝试备用方案:", clipboardError);
+             // 备用方案：使用 textarea
+             this.copyToClipboardFallback(optionText);
+           }
+         } else {
+           // 浏览器不支持 Clipboard API，使用备用方案
+           this.copyToClipboardFallback(optionText);
+         }
+
+         // 2. 如果有 STscript，调用它
+         if (typeof STscript !== "undefined") {
+           try {
+             await STscript(`/echo 选项"${optionText}"已复制到剪贴板`);
+             console.log("✓ STscript 调用成功");
+           } catch (stError) {
+             console.warn("⚠️ STscript 调用失败:", stError);
+           }
+         }
+
+         // 3. 执行选项的回调函数（如果存在）
+         if (option.回调 && typeof option.回调 === "function") {
+           try {
+             await option.回调();
+             console.log("✓ 选项回调执行成功");
+           } catch (callbackError) {
+             console.error("❌ 选项回调执行失败:", callbackError);
+           }
+         }
+
+         // 4. 可选：发送自定义事件（供其他组件监听）
+         const event = new CustomEvent("advanceOptionClicked", {
+           detail: {
+             option: optionText,
+             index: index,
+             fullOption: option,
+             timestamp: new Date().toISOString(),
+           },
+         });
+         document.dispatchEvent(event);
+         console.log("✓ 自定义事件已触发");
+       } catch (error) {
+         console.error("❌ 处理推进选项失败:", error.message || error);
+       }
+     },
+
+     // 复制到剪贴板的备用方案
+     copyToClipboardFallback(text) {
+       try {
+         // 创建一个临时的 textarea 元素
+         const textarea = document.createElement("textarea");
+         textarea.value = text;
+         textarea.style.position = "fixed";
+         textarea.style.opacity = "0";
+         document.body.appendChild(textarea);
+
+         // 选中并复制文本
+         textarea.select();
+         const successful = document.execCommand("copy");
+
+         // 清理
+         document.body.removeChild(textarea);
+
+         if (successful) {
+           console.log(`✓ 备用方案复制成功: "${text}"`);
+         } else {
+           console.error("❌ 备用方案复制失败");
+         }
+       } catch (error) {
+         console.error("❌ 备用方案执行异常:", error);
+       }
+     },
+   };
+ }
 
 /**
  * 角色卡片组件

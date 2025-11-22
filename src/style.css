@@ -29,12 +29,13 @@
   --color-text-secondary: #d0d0d0; /* 次要文字 - 柔和对比 */
   --color-text-muted: #999; /* 静音文字 - 参数显示 */
 
-  /* 摄影主题强调色 */
-  --color-accent-gold: #d4af37; /* 金色 - 专业品质 */
-  --color-accent-silver: #c0c0c0; /* 银色 - 金属质感 */
-  --color-accent-amber: #ffb000; /* 琥珀色 - 暖光 */
-  --color-accent-cyan: #00bcd4; /* 青色 - 冷光 */
-  --color-accent-red: #e53e3e; /* 红色 - 录制指示 */
+   /* 摄影主题强调色 */
+   --color-accent-gold: #d4af37; /* 金色 - 专业品质 */
+   --color-accent-silver: #c0c0c0; /* 银色 - 金属质感 */
+   --color-accent-amber: #ffb000; /* 琥珀色 - 暖光 */
+   --color-accent-cyan: #00bcd4; /* 青色 - 冷光 */
+   --color-accent-red: #e53e3e; /* 红色 - 录制指示 */
+   --color-accent-green: #48bb78; /* 绿色 - 成功/积极 */
 
   /* 摄影主题间距和尺寸 */
   --spacing-container: 12px; /* 容器边距 */

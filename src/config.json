@@ -14,7 +14,8 @@
     "accent-silver": "var(--color-accent-silver)",
     "accent-amber": "var(--color-accent-amber)",
     "accent-cyan": "var(--color-accent-cyan)",
-    "accent-red": "var(--color-accent-red)"
+    "accent-red": "var(--color-accent-red)",
+    "accent-green": "var(--color-accent-green)"
   },
   "cssClasses": {
     "FIELD_GRID": "grid grid-cols-[140px_1fr] md:grid-cols-[120px_1fr] sm:grid-cols-1 gap-2 md:gap-2 sm:gap-1.5 py-1 items-start border-b border-border-subtle last:border-b-0",

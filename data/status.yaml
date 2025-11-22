@@ -235,3 +235,25 @@
       type: "$grow"
       description: "所有曾经出现过的女模角色名单，动态增长数组。新女模首次登场时追加，重复出现不再追加"
       default: []
+
+推进选项:
+  type: "$list"
+  description: "每轮剧情输出后生成的 4 个推进选项，指导玩家的下一步行动选择"
+  fields:
+    "{{index}}":
+      type: "object"
+      description: "单个推进选项"
+      fields:
+        选项:
+          type: "string"
+          description: "具体的行动方案描述（不包含emoji）"
+          default: ""
+        方向:
+          type: "$enum={积极;消极}"
+          description: "选项的方向：积极（正面发展）或消极（堕落方向）"
+          default: "积极"
+        emoji:
+          type: "string"
+          description: "表情符号（如☺️、😡、😭、🤤等）"
+          default: "😐"
+  default: []

@@ -19,7 +19,7 @@ filename: plot-log-format-guide.md
 
 ### 1. 绝对遵守 Status.yaml Schema
 
-- **所有 plot-log 输出必须与 @status.md 定义的 schema 完全一致**
+- **所有 plot-log 输出必须完全遵照下文描述的规则**
 - **不允许新增、修改或删除任何字段**
 - **不允许改变字段的嵌套结构**
 - **不允许使用未在 schema 中定义的字段名**
