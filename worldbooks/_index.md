@@ -329,6 +329,7 @@ worldbook-s/status.md (Schema 定义)
 
 | 版本 | 日期 | 改动 |
 |------|------|------|
+| 1.7 | 2024-11-23 | 新规则：拍摄任务 Key 改为 `人名--yyyy-mm-dd`，添加发布日期字段（7 字段），同日唯一性约束 |
 | 1.6 | 2024-11-23 | 精简完成：`plot-log-format-guide.md` 从 852→243 行（-71%），`status.md` 精简示例，总体节省 70% |
 | 1.5 | 2024-11-23 | 重构：`status.md` 和 `plot-log-format-guide.md` 分层 → `*-quick.md` 极简版 + 详细参考 |
 | 1.4 | 2024-11-23 | 新增 EXAMPLES.md（~3500 tokens）集中所有详细示例和错误纠正 |
